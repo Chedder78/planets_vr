@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GPK ULTRA 3D | AR/VR Hub</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Bangers', cursive; }
+        #mode-buttons { 
+            position: fixed; bottom: 20px; left: 0; right: 0; text-align: center; z-index: 10000;
+        }
+        .mode-btn {
+            padding: 15px 30px; margin: 0 10px; background: #ff3e41; color: #ffde37;
+            border: 3px solid #1a1a1a; font-size: 1.2rem; cursor: pointer; border-radius: 30px;
+        }
+        #enter-button {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            padding: 20px 40px; background: #ff3e41; color: #ffde37; border: 5px solid #1a1a1a;
+            font-size: 2.5rem; cursor: pointer; z-index: 10000; border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+</head>
+<body>
+    <button id="enter-button">ENTER GALLERY</button>
+    <div id="mode-buttons" style="display:none;">
+        <button class="mode-btn" id="vr-btn">VR MODE</button>
+        <button class="mode-btn" id="ar-btn">AR MODE</button>
+    </div>
+
+    <!-- VR Scene -->
+    <a-scene id="vr-scene" vr-mode-ui="enabled: true" loading-screen="enabled: false" visible="false">
+        <a-entity environment="preset: starry; groundColor: #1a1a1a; grid: none"></a-entity>
+        <a-entity id="rig" movement-controls="speed: 0.5">
+            <a-entity camera look-controls position="0 1.6 0">
+                <a-entity cursor="fuse: true; fuseTimeout: 500" position="0 0 -1"
+                    geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+                    material="color: #ffde37; shader: flat">
+                </a-entity>
+            </a-entity>
+        </a-entity>
+        
+        <!-- North Wall -->
+        <a-entity position="0 1.5 -4" rotation="0 0 0">
+            <a-entity position="-2 1.5 0"><a-image src="#card1" width="0.8" height="1.1"></a-entity>
+            <a-entity position="0 1.5 0"><a-image src="#card2" width="0.8" height="1.1"></a-entity>
+            <a-entity position="2 1.5 0"><a-image src="#card3" width="0.8" height="1.1"></a-entity>
+        </a-entity>
+        
+        <!-- East Wall -->
+        <a-entity position="4 1.5 0" rotation="0 -90 0">
+            <a-entity position="-2 1.5 0"><a-image src="#card4" width="0.8" height="1.1"></a-entity>
+            <a-entity position="0 1.5 0"><a-image src="#card5" width="0.8" height="1.1"></a-entity>
+            <a-entity position="2 1.5 0"><a-image src="#card6" width="0.8" height="1.1"></a-entity>
+        </a-entity>
+        
+        <!-- South Wall -->
+        <a-entity position="0 1.5 4" rotation="0 180 0">
+            <a-entity position="-2 1.5 0"><a-image src="#card7" width="0.8" height="1.1"></a-entity>
+            <a-entity position="0 1.5 0"><a-image src="#card8" width="0.8" height="1.1"></a-entity>
+            <a-entity position="2 1.5 0"><a-image src="#card9" width="0.8" height="1.1"></a-entity>
+        </a-entity>
+        
+        <!-- West Wall -->
+        <a-entity position="-4 1.5 0" rotation="0 90 0">
+            <a-entity position="-2 1.5 0"><a-image src="#card10" width="0.8" height="1.1"></a-entity>
+            <a-entity position="0 1.5 0"><a-image src="#card11" width="0.8" height="1.1"></a-entity>
+            <a-entity position="2 1.5 0"><a-image src="#card12" width="0.8" height="1.1"></a-entity>
+        </a-entity>
+        
+        <a-assets>
+            <img id="card1" src="PompaPaulie.png">
+            <img id="card2" src="20250503011555.png">
+            <img id="card3" src="Os10_custom_wrapper.png">
+            <img id="card4" src="20250503012558.png">
+            <img id="card5" src="20250503022823.png">
+            <img id="card6" src="20250503032454.png">
+            <img id="card7" src="20250503034156.png">
+            <img id="card8" src="20250503035601.png">
+            <img id="card9" src="Os9_custom_wrapper.png">
+            <img id="card10" src="Os10_custom_wrapper.png">
+            <img id="card11" src="20250503012558.png">
+            <img id="card12" src="PompaPaulie.png">
+        </a-assets>
+    </a-scene>
+
+    <!-- AR Scene -->
+    <a-scene id="ar-scene" embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;" 
+             vr-mode-ui="enabled: false" visible="false">
+        <a-marker type="barcode" value="5">
+            <a-image src="#card1" width="1" height="1.4"></a-image>
+        </a-marker>
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        document.getElementById('enter-button').addEventListener('click', function() {
+            this.style.display = 'none';
+            document.getElementById('mode-buttons').style.display = 'block';
+            document.getElementById('vr-scene').setAttribute('visible', 'true');
+        });
+
+        document.getElementById('vr-btn').addEventListener('click', function() {
+            document.getElementById('vr-scene').setAttribute('visible', 'true');
+            document.getElementById('ar-scene').setAttribute('visible', 'false');
+        });
+
+        document.getElementById('ar-btn').addEventListener('click', function() {
+            document.getElementById('vr-scene').setAttribute('visible', 'false');
+            document.getElementById('ar-scene').setAttribute('visible', 'true');
+        });
+    </script>
+</body>
+</html>
