@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GPK ULTRA 3D | Immersive Collector's Hub</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-environment-component@1.3.0/dist/aframe-environment-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-event-set-component@5.0.0/dist/aframe-event-set-component.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Bangers', cursive;
+        }
+        #enter-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            background: #ff3e41;
+            color: #ffde37;
+            border: 5px solid #1a1a1a;
+            font-size: 2.5rem;
+            cursor: pointer;
+            z-index: 10000;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .ui-panel {
+            position: fixed;
+            background: rgba(26, 26, 26, 0.9);
+            border: 3px solid #ffde37;
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 10000;
+            color: white;
+            max-width: 300px;
+        }
+        #card-details {
+            top: 20px;
+            right: 20px;
+            display: none;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+</head>
+<body>
+    <button id="enter-button">ENTER VR GALLERY</button>
+    
+    <div id="card-details" class="ui-panel">
+        <h2 style="color:#ffde37;margin-bottom:10px;">CARD DETAILS</h2>
+        <p><strong>Title:</strong> <span id="card-title"></span></p>
+        <p><strong>Series:</strong> <span id="card-series"></span></p>
+        <p><strong>Value:</strong> $<span id="card-value"></span></p>
+    </div>
+
+    <a-scene vr-mode-ui="enabled: true" loading-screen="enabled: false" renderer="colorManagement: true">
+        <!-- Environment -->
+        <a-entity environment="preset: starry; groundColor: #1a1a1a; grid: none"></a-entity>
+        
+        <!-- Camera Rig -->
+        <a-entity id="rig" movement-controls="speed: 0.5">
+            <a-entity camera look-controls="pointerLockEnabled: true" position="0 1.6 0">
+                <a-entity cursor="fuse: true; fuseTimeout: 500" 
+                          position="0 0 -1"
+                          geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+                          material="color: #ffde37; shader: flat">
+                </a-entity>
+            </a-entity>
+        </a-entity>
+        
+        <!-- NORTH WALL (3 cards) -->
+        <a-entity id="north-wall" position="0 1.5 -4" rotation="0 0 0">
+            <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="1">
+                <a-image src="#card1" width="0.8" height="1.1"></a-image>
+            </a-entity>
+            <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="2">
+                <a-image src="#card2" width="0.8" height="1.1"></a-image>
+            </a-entity>
+            <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="3">
+                <a-image src="#card3" width="0.8" height="1.1"></a-image>
+            </a-entity>
+        </a-entity>
+        
+        <!-- EAST WALL (3 cards) -->
+        <a-entity id="east-wall" position="4 1.5 0" rotation="0 -90 0">
+            <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="4">
+                <a-image src="#card4" width="0.8" height="1.1"></a-image>
+            </a-entity>
+            <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="5">
+                <a-image src="#card5" width="0.8" height="1.1"></a-image>
+            </a-entity>
+            <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="6">
+                <a-image src="#card6" width="0.8" height="1.1"></a-image>
+            </a-entity>
+        </a-entity>
+        
+        <!-- SOUTH WALL (3 cards) -->
+        <a-entity id="south-wall" position="0 1.5 4" rotation="0 180 0">
+            <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="7">
+                <a-image src="#card7" width="0.8" height="1.1"></a-image>
+            </a-entity>
+            <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="8">
+                <a-image src="#card8" width="0.8" height="1.1"></a-image>
+            </a-entity>
+            <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="9">
+                <a-image src="#card9" width="0.8" height="1.1"></a-image>
+            </a-entity>
+        </a-entity>
+        
+        <!-- WEST WALL (3 cards) -->
+        <a-entity id="west-wall" position="-4 1.5 0" rotation="0 90 0">
+            <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="10">
+                <a-image src="#card10" width="0.8" height="1.1"></a-image>
+            </a-entity>
+            <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="11">
+                <a-image src="#card11" width="0.8" height="1.1"></a-image>
+            </a-entity>
+            <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="12">
+                <a-image src="#card12" width="0.8" height="1.1"></a-image>
+            </a-entity>
+        </a-entity>
+        
+        <!-- OVERHEAD DISPLAY CARDS (5 total) -->
+        <!-- Center Hanging Card -->
+        <a-entity position="0 3.5 0" rotation="-15 0 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 60000">
+            <a-image src="#featured1" width="1.5" height="2.1"></a-image>
+        </a-entity>
+        
+        <!-- Four Corner Hanging Cards -->
+        <a-entity position="-3 3 -3" rotation="-10 45 0">
+            <a-image src="#featured2" width="1.2" height="1.7"></a-image>
+        </a-entity>
+        
+        <a-entity position="3 3 -3" rotation="-10 -45 0">
+            <a-image src="#featured3" width="1.2" height="1.7"></a-image>
+        </a-entity>
+        
+        <a-entity position="3 3 3" rotation="-10 -135 0">
+            <a-image src="#featured4" width="1.2" height="1.7"></a-image>
+        </a-entity>
+        
+        <a-entity position="-3 3 3" rotation="-10 135 0">
+            <a-image src="#featured5" width="1.2" height="1.7"></a-image>
+        </a-entity>
+        
+        <!-- Assets -->
+        <a-assets>
+            <!-- Wall Cards (12 total) -->
+            <img id="card1" src="PompaPaulie.png">
+            <img id="card2" src="20250503011555.png">
+            <img id="card3" src="Os10_custom_wrapper.png">
+            <img id="card4" src="20250503012558.png">
+            <img id="card5" src="20250503022823.png">
+            <img id="card6" src="20250503032454.png">
+            <img id="card7" src="20250503034156.png">
+            <img id="card8" src="20250503035601.png">
+            <img id="card9" src="Os9_custom_wrapper.png">
+            <img id="card10" src="Os10_custom_wrapper.png">
+            <img id="card11" src="20250503012558.png">
+            <img id="card12" src="PompaPaulie.png">
+            
+            <!-- Featured Cards (5 total) -->
+            <img id="featured1" src="PompaPaulie.png">
+            <img id="featured2" src="20250503011555.png">
+            <img id="featured3" src="Os10_custom_wrapper.png">
+            <img id="featured4" src="20250503012558.png">
+            <img id="featured5" src="20250503022823.png">
+        </a-assets>
+    </a-scene>
+
+    <script>
+        // Card data - replace with your actual collection
+        const cardData = {
+            "1": { title: "Pompa Paulie", series: "Ultra 3D", value: 150.00 },
+            "2": { title: "Ultra 3D", series: "Series 2025", value: 125.00 },
+            "3": { title: "OS10 Wrapper", series: "Vintage", value: 200.00 },
+            "4": { title: "3D Special", series: "Series 2025", value: 175.00 },
+            "5": { title: "Rare Edition", series: "Ultra 3D", value: 225.00 },
+            "6": { title: "Collector's Item", series: "Vintage", value: 250.00 },
+            "7": { title: "Limited Edition", series: "Series 2025", value: 275.00 },
+            "8": { title: "Gold Foil", series: "Ultra 3D", value: 300.00 },
+            "9": { title: "Platinum", series: "Vintage", value: 350.00 },
+            "10": { title: "Holographic", series: "Ultra 3D", value: 400.00 },
+            "11": { title: "First Edition", series: "Vintage", value: 450.00 },
+            "12": { title: "Prototype", series: "Ultra 3D", value: 500.00 }
+        };
+
+        // Initialize scene
+        document.getElementById('enter-button').addEventListener('click', function() {
+            this.style.display = 'none';
+            setupCardInteractions();
+        });
+
+        function setupCardInteractions() {
+            // Add click handlers to all cards
+            document.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const cardId = this.getAttribute('data-card');
+                    showCardDetails(cardId);
+                    
+                    // Add pulse animation
+                    this.setAttribute('animation', {
+                        property: 'scale',
+                        to: '1.1 1.1 1.1',
+                        dur: 300,
+                        easing: 'easeInOutQuad',
+                        dir: 'alternate'
+                    });
+                });
+            });
+        }
+
+        function showCardDetails(cardId) {
+            const card = cardData[cardId];
+            if (!card) return;
+            
+            // Update UI
+            document.getElementById('card-title').textContent = card.title;
+            document.getElementById('card-series').textContent = card.series;
+            document.getElementById('card-value').textContent = card.value.toFixed(2);
+            
+            // Show panel
+            document.getElementById('card-details').style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                document.getElementById('card-details').style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
