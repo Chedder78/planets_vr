@@ -2,796 +2,414 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>GPK ULTRA 3D | Premium Art Gallery Experience</title>
-    <!-- Use A-Frame 1.5.0 for stability -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <!-- Movement controls for smooth WASD navigation -->
-    <script src="https://unpkg.com/aframe-movement-controls@1.3.0/dist/aframe-movement-controls.min.js"></script>
-    <!-- Environment component for starry sky -->
-    <script src="https://unpkg.com/aframe-environment-component@1.3.0/dist/aframe-environment-component.min.js"></script>
-    <!-- Event set for interactions -->
-    <script src="https://unpkg.com/aframe-event-set-component@5.0.0/dist/aframe-event-set-component.min.js"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>GPK ULTRA 3D | Walkable Gallery</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             font-family: 'Bangers', cursive;
+            background-color: #1a1a1a;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
-        #enter-btn {
+        #enter-button {
             position: absolute;
-            bottom: 40px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
-            padding: 16px 40px;
-            background: linear-gradient(135deg, #ff3e41, #d32f2f);
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            background: #ff3e41;
             color: #ffde37;
-            border: 4px solid #ffffff;
+            border: 5px solid #1a1a1a;
             font-size: 2rem;
-            font-weight: bold;
             cursor: pointer;
             z-index: 10000;
-            border-radius: 60px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8), 0 0 15px #ffde37;
+            border-radius: 10px;
             font-family: 'Bangers', cursive;
-            letter-spacing: 3px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            backdrop-filter: blur(4px);
+            text-transform: uppercase;
         }
-        #enter-btn:hover {
-            transform: translateX(-50%) scale(1.07);
-            box-shadow: 0 0 40px rgba(255,222,55,0.6);
+        #loading-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: #ffde37;
+            font-family: 'Bangers', cursive;
+        }
+        #loading-screen.hidden { display: none; }
+        .progress-bar {
+            width: 300px; height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px; margin: 20px;
+            overflow: hidden; border: 2px solid #ffde37;
+        }
+        .progress-fill {
+            height: 100%; background: #ff3e41;
+            width: 0%; transition: width 0.3s;
         }
         .ui-panel {
             position: fixed;
-            background: rgba(10, 10, 20, 0.92);
-            backdrop-filter: blur(12px);
-            border-right: 5px solid #ffde37;
-            border-top: 1px solid #ffde37;
-            border-radius: 16px;
-            padding: 18px 24px;
-            z-index: 10000;
-            color: white;
-            width: 280px;
-            font-family: 'Bangers', cursive;
-            pointer-events: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            transition: opacity 0.25s ease;
+            background: rgba(26, 26, 26, 0.95);
+            border: 3px solid #ffde37;
+            border-radius: 10px; padding: 15px;
+            z-index: 10000; color: white;
+            max-width: 300px;
+            font-family: Arial, sans-serif;
         }
-        #card-details {
-            bottom: 30px;
-            right: 30px;
-            left: auto;
-            top: auto;
-            display: none;
-            text-shadow: 1px 1px 0px #000;
-        }
-        .ui-panel h2 {
-            color: #ffde37;
-            margin: 0 0 12px 0;
-            font-size: 2rem;
-            letter-spacing: 2px;
-        }
-        .ui-panel p {
-            margin: 10px 0;
-            font-size: 1.3rem;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-        }
-        .instruction {
+        #card-details { top: 20px; right: 20px; display: none; }
+        #recalibrate-btn {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.75);
-            color: #ffde37;
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-family: monospace;
-            font-size: 14px;
-            font-weight: bold;
-            pointer-events: none;
-            z-index: 10000;
-            backdrop-filter: blur(5px);
-            border-left: 3px solid #ffde37;
+            top: 20px; right: 20px;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: rgba(26,26,26,0.8);
+            border: 2px solid #ffde37;
+            color: #ffde37; font-size: 20px;
+            cursor: pointer; z-index: 10000;
+            display: none;
         }
-        @media (max-width: 700px) {
-            .instruction { font-size: 10px; bottom: 12px; left: 12px; }
-            .ui-panel { width: 220px; padding: 12px 16px; }
-            .ui-panel h2 { font-size: 1.5rem; }
-            .ui-panel p { font-size: 1rem; }
-            #enter-btn { font-size: 1.4rem; padding: 12px 28px; bottom: 25px; }
+        @media (max-width: 480px) {
+            #enter-button { font-size: 1.5rem; padding: 15px 30px; }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
 </head>
 <body>
-    <button id="enter-btn">✨ ENTER ART GALLERY ✨</button>
+    <div id="loading-screen">
+        <h1 style="font-size:3rem;margin-bottom:20px;">GPK ULTRA 3D</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div id="loading-text">Loading Gallery...</div>
+    </div>
+    
+    <button id="enter-button">ENTER GALLERY</button>
+    <button id="recalibrate-btn">🎯</button>
     
     <div id="card-details" class="ui-panel">
-        <h2>🎨 MASTERPIECE INFO</h2>
-        <p><strong>🏆 TITLE:</strong> <span id="card-title"></span></p>
-        <p><strong>📀 SERIES:</strong> <span id="card-series"></span></p>
-        <p><strong>💰 EST. VALUE:</strong> $<span id="card-value"></span></p>
+        <h2 style="color:#ffde37;margin-bottom:10px;">CARD DETAILS</h2>
+        <p><strong>Title:</strong> <span id="card-title"></span></p>
+        <p><strong>Series:</strong> <span id="card-series"></span></p>
+        <p><strong>Value:</strong> $<span id="card-value"></span></p>
     </div>
-    <div class="instruction">🖱️ CLICK TO LOCK | WASD / ARROWS TO MOVE | 🖱️ CLICK CARDS FOR DETAILS</div>
 
-    <a-scene 
-        vr-mode-ui="enabled: true" 
-        background="color: #030318"
-        renderer="colorManagement: true; antialias: true"
-        keyboard-shortcuts="enterVR: false"
-        shadow="enabled: false"
-    >
-        <!-- ENHANCED ENVIRONMENT: starry sky with custom bright stars + ground floor grid -->
-        <a-entity environment="preset: starry; groundColor: #151525; grid: cross; gridColor: #ffcc44; groundY: -0.1; groundTexture: none; starDensity: 0.95; starSize: 0.8"></a-entity>
-        
-        <!-- CUSTOM BRIGHT COLORFUL STARS PARTICLE SYSTEM - to make sky pop -->
-        <a-entity id="colorful-stars" position="0 8 -12">
-            <a-particle-system 
-                preset="stardust" 
-                color="#ff3366, #ffde37, #44ffaa, #ff9933, #aa66ff" 
-                particleCount="400" 
-                size="0.25"
-                opacity="0.9"
-                drift="0.2"
-                accelerationY="0.05"
-                rotationSpeed="0.02"
-                direction="random"
-                lifetime="8"
-                speed="0.4"
-            ></a-particle-system>
-        </a-entity>
-        
-        <!-- Extra floating glitter stars for magical gallery vibe -->
-        <a-entity position="0 5 -8">
-            <a-particle-system 
-                preset="snow" 
-                color="#ffdd77, #ffaa44, #ffee88, #77aaff" 
-                particleCount="250" 
-                size="0.15"
-                opacity="0.7"
-                speed="0.2"
-                drift="0.1"
-                rotationSpeed="0.01"
-                direction="up"
-            ></a-particle-system>
-        </a-entity>
-        
-        <!-- Main Gallery Floor (luxurious reflective finish) -->
-        <a-plane 
-            id="gallery-floor"
-            position="0 -0.08 0" 
-            rotation="-90 0 0" 
-            width="24" 
-            height="24" 
-            color="#1a1a2e" 
-            roughness="0.3" 
-            metalness="0.7"
-            receive-shadow="false"
-            material="side: double; transparent: false; opacity: 1">
-        </a-plane>
-        
-        <!-- Elegant grid overlay to enhance depth perception -->
-        <a-grid 
-            position="0 0 0" 
-            rotation="-90 0 0" 
-            width="22" 
-            height="22" 
-            divisions="24" 
-            color="#ffdd99" 
-            opacity="0.4"
-            material="side: double">
-        </a-grid>
-        
-        <!-- Decorative gallery columns / subtle ambient markers -->
-        <a-cylinder position="-4.5 1.2 -4.8" radius="0.2" height="2.5" color="#c0a070" metalness="0.4" roughness="0.6"></a-cylinder>
-        <a-cylinder position="4.5 1.2 -4.8" radius="0.2" height="2.5" color="#c0a070" metalness="0.4"></a-cylinder>
-        <a-cylinder position="-4.5 1.2 4.8" radius="0.2" height="2.5" color="#c0a070"></a-cylinder>
-        <a-cylinder position="4.5 1.2 4.8" radius="0.2" height="2.5" color="#c0a070"></a-cylinder>
-        
-        <!-- Camera Rig with movement controls (eye-level at 1.7m height, perfect for art viewing) -->
-        <a-entity id="rig" 
-                  movement-controls="speed: 1.3; constrainToNavMesh: false; enableJump: false; fly: false"
-                  position="0 1.7 0">
-            <a-entity camera="fov: 80" look-controls="pointerLockEnabled: true" position="0 1.65 0">
-                <!-- Laser-like cursor for precise card selection -->
-                <a-entity cursor="fuse: false; rayOrigin: mouse"
-                          position="0 0 -0.9"
-                          geometry="primitive: ring; radiusInner: 0.008; radiusOuter: 0.022"
-                          material="color: #ffde37; shader: flat; opacity: 0.95; emissive: #ffaa33"
-                          raycaster="objects: .card; far: 12; interval: 40">
-                </a-entity>
-            </a-entity>
-        </a-entity>
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
+    </script>
 
-        <!-- ========= WALL CARDS RAISED HIGHER (eye-level art display ~1.6m to 1.9m center) ========= -->
-        <!-- Each card group is positioned so the card center is at 1.7m from floor (art gallery standard) -->
-        
-        <!-- NORTH WALL (z = -4.5) - Cards at Y: 0.9 to 2.3 range, center 1.6 -->
-        <a-entity id="north-wall" position="0 1.7 -4.6" rotation="0 0 0">
-            <!-- Card 1 (left) -->
-            <a-entity class="card" position="-2.1 0.4 0.08" rotation="0 0 0" data-card="1">
-                <a-image src="#card1" width="0.95" height="1.3" transparent="true" material="shader: standard; emissive: #221100; emissiveIntensity: 0.2"></a-image>
-            </a-entity>
-            <!-- Card 2 (center) -->
-            <a-entity class="card" position="0 0.4 0.08" rotation="0 0 0" data-card="2">
-                <a-image src="#card2" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-            <!-- Card 3 (right) -->
-            <a-entity class="card" position="2.1 0.4 0.08" rotation="0 0 0" data-card="3">
-                <a-image src="#card3" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-        </a-entity>
+    <script type="module">
+        import * as THREE from 'three';
 
-        <!-- EAST WALL (x = 4.6) rotated to face inward -->
-        <a-entity id="east-wall" position="4.6 1.7 0" rotation="0 -90 0">
-            <a-entity class="card" position="-2.1 0.4 0.08" rotation="0 0 0" data-card="4">
-                <a-image src="#card4" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-            <a-entity class="card" position="0 0.4 0.08" rotation="0 0 0" data-card="5">
-                <a-image src="#card5" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-            <a-entity class="card" position="2.1 0.4 0.08" rotation="0 0 0" data-card="6">
-                <a-image src="#card6" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-        </a-entity>
-
-        <!-- SOUTH WALL (z = 4.6) -->
-        <a-entity id="south-wall" position="0 1.7 4.6" rotation="0 180 0">
-            <a-entity class="card" position="-2.1 0.4 0.08" rotation="0 0 0" data-card="7">
-                <a-image src="#card7" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-            <a-entity class="card" position="0 0.4 0.08" rotation="0 0 0" data-card="8">
-                <a-image src="#card8" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-            <a-entity class="card" position="2.1 0.4 0.08" rotation="0 0 0" data-card="9">
-                <a-image src="#card9" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-        </a-entity>
-
-        <!-- WEST WALL (x = -4.6) -->
-        <a-entity id="west-wall" position="-4.6 1.7 0" rotation="0 90 0">
-            <a-entity class="card" position="-2.1 0.4 0.08" rotation="0 0 0" data-card="10">
-                <a-image src="#card10" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-            <a-entity class="card" position="0 0.4 0.08" rotation="0 0 0" data-card="11">
-                <a-image src="#card11" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-            <a-entity class="card" position="2.1 0.4 0.08" rotation="0 0 0" data-card="12">
-                <a-image src="#card12" width="0.95" height="1.3" transparent="true"></a-image>
-            </a-entity>
-        </a-entity>
-
-        <!-- ========= CEILING / OVERHEAD FEATURED CARDS (RAISED HIGH, NO FLOATING IN FACE) ========= -->
-        <!-- Rotating Card Chandelier - UP ON THE CEILING WHERE IT BELONGS -->
-<a-entity position="0 5.5 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 30000">
-    <!-- Hanging chain/rod -->
-    <a-cylinder position="0 0.5 0" radius="0.05" height="1" color="#FFDE37" metalness="0.8"></a-cylinder>
-    
-    <!-- The card hanging down -->
-    <a-image src="#featured-card" width="1.2" height="1.6" position="0 -0.5 0" rotation="0 0 0"></a-image>
-    
-    <!-- Spotlight shining down -->
-    <a-light type="spot" position="0 0.3 0" rotation="-90 0 0" color="#FFDE37" intensity="0.8" distance="8" angle="30"></a-light>
-</a-entity>
-        <!-- Four corner hanging gallery pieces at height 3.4m - well above head, no obstruction -->
-        <a-entity position="-3.5 3.5 -3.5" rotation="-6 45 0" animation="property: rotation; to: -6 405 0; loop: true; dur: 62000; easing: linear">
-            <a-image src="#featured2" width="1.2" height="1.7" transparent="true"></a-image>
-        </a-entity>
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
         
-        <a-entity position="3.5 3.5 -3.5" rotation="-6 -45 0" animation="property: rotation; to: -6 -405 0; loop: true; dur: 58000; easing: linear">
-            <a-image src="#featured3" width="1.2" height="1.7" transparent="true"></a-image>
-        </a-entity>
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.6, 5);
         
-        <a-entity position="3.5 3.5 3.5" rotation="-6 -135 0" animation="property: rotation; to: -6 -495 0; loop: true; dur: 64000; easing: linear">
-            <a-image src="#featured4" width="1.2" height="1.7" transparent="true"></a-image>
-        </a-entity>
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
         
-        <a-entity position="-3.5 3.5 3.5" rotation="-6 135 0" animation="property: rotation; to: -6 495 0; loop: true; dur: 60000; easing: linear">
-            <a-image src="#featured5" width="1.2" height="1.7" transparent="true"></a-image>
-        </a-entity>
+        // Lighting
+        scene.add(new THREE.AmbientLight(0x404060));
+        const dirLight = new THREE.DirectionalLight(0xffde37, 0.8);
+        dirLight.position.set(2, 5, 3);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
         
-        <!-- Additional Gallery Lighting: warm spots to highlight card artworks -->
-        <a-light type="ambient" color="#302040" intensity="0.55"></a-light>
-        <a-light type="directional" color="#ffdd99" intensity="0.7" position="3 6 2" cast-shadow="false"></a-light>
-        <a-light type="point" intensity="0.8" color="#ffaa66" position="0 2.8 0" distance="9" decay="1.2"></a-light>
-        <a-light type="point" intensity="0.5" color="#cc88ff" position="-2 2.5 3"></a-light>
-        <a-light type="point" intensity="0.5" color="#88ccff" position="2 2.5 -3"></a-light>
-        
-        <!-- Spotlights aimed at each wall for dramatic effect -->
-        <a-light type="spot" intensity="0.65" angle="35" position="0 3.2 -3.8" target="#north-wall" color="#ffdd99"></a-light>
-        <a-light type="spot" intensity="0.65" angle="35" position="3.8 3.2 0" target="#east-wall" color="#ffccaa"></a-light>
-        <a-light type="spot" intensity="0.65" angle="35" position="0 3.2 3.8" target="#south-wall" color="#ffdd99"></a-light>
-        <a-light type="spot" intensity="0.65" angle="35" position="-3.8 3.2 0" target="#west-wall" color="#ffccaa"></a-light>
-
-        <!-- ========= ASSETS (Card Images with fallback placeholders) ========= -->
-        <a-assets>
-            <!-- 12 Wall Cards - using original file names + robust fallback -->
-            <img id="card1" src="PompaPaulie.png" crossorigin="anonymous" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%233d1f2a\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffde37\' font-size=\'20\'%3EGPK%20ULTRA%3C/text%3E%3C/svg%3E'">
-            <img id="card2" src="20250503011555.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%232b1f3d\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffcc44\' font-size=\'18\'%3E3D%20BLAST%3C/text%3E%3C/svg%3E'">
-            <img id="card3" src="Os10_custom_wrapper.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%233d2a1f\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffde37\' font-size=\'18\'%3EOS10%20WRAP%3C/text%3E%3C/svg%3E'">
-            <img id="card4" src="20250503012558.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%232f2a3d\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffaa55\' font-size=\'16\'%3EHOLO%20SHIFT%3C/text%3E%3C/svg%3E'">
-            <img id="card5" src="20250503022823.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%23212c3a\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffde37\' font-size=\'16\'%3ERARE%20GLOW%3C/text%3E%3C/svg%3E'">
-            <img id="card6" src="20250503032454.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%233a1f2c\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffcc66\' font-size=\'16\'%3ENIGHTMARE%3C/text%3E%3C/svg%3E'">
-            <img id="card7" src="20250503034156.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%23352c1f\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffde37\' font-size=\'16\'%3EGOLDEN%20DEMON%3C/text%3E%3C/svg%3E'">
-            <img id="card8" src="20250503035601.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%232c3a2f\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffde37\' font-size=\'16\'%3ECHROME%20ZOMBIE%3C/text%3E%3C/svg%3E'">
-            <img id="card9" src="Os9_custom_wrapper.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%23402a3a\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffde37\' font-size=\'16\'%3EOS9%20LEGACY%3C/text%3E%3C/svg%3E'">
-            <img id="card10" src="Os10_custom_wrapper.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%233d2f1f\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffde37\' font-size=\'16\'%3EULTRA%20ED%3C/text%3E%3C/svg%3E'">
-            <img id="card11" src="20250503012558.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%232a2a3d\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffcc77\' font-size=\'16\'%3ESPARKLE%20ART%3C/text%3E%3C/svg%3E'">
-            <img id="card12" src="PompaPaulie.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 280\'%3E%3Crect width=\'200\' height=\'280\' fill=\'%233a2c2f\'/%3E%3Ctext x=\'20\' y=\'140\' fill=\'%23ffde37\' font-size=\'16\'%3EPOMPA%20PROTO%3C/text%3E%3C/svg%3E'">
-            
-            <!-- Featured overhead art images -->
-            <img id="featured1" src="PompaPaulie.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 400\'%3E%3Crect width=\'300\' height=\'400\' fill=\'%23aa3344\'/%3E%3Ctext x=\'30\' y=\'200\' fill=\'%23ffdd77\' font-size=\'28\'%3ECENTERPIECE%3C/text%3E%3C/svg%3E'">
-            <img id="featured2" src="20250503011555.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 400\'%3E%3Crect width=\'300\' height=\'400\' fill=\'%234477aa\'/%3E%3Ctext x=\'30\' y=\'200\' fill=\'%23ffde37\' font-size=\'24\'%3EGALLERY%20STAR%3C/text%3E%3C/svg%3E'">
-            <img id="featured3" src="Os10_custom_wrapper.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 400\'%3E%3Crect width=\'300\' height=\'400\' fill=\'%23aa7744\'/%3E%3Ctext x=\'30\' y=\'200\' fill=\'%23ffffaa\' font-size=\'24\'%3ECOSMIC%20WRAP%3C/text%3E%3C/svg%3E'">
-            <img id="featured4" src="20250503012558.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 400\'%3E%3Crect width=\'300\' height=\'400\' fill=\'%2355aa77\'/%3E%3Ctext x=\'30\' y=\'200\' fill=\'%23ffdd77\' font-size=\'24\'%3EHOLO%20VISION%3C/text%3E%3C/svg%3E'">
-            <img id="featured5" src="20250503022823.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 400\'%3E%3Crect width=\'300\' height=\'400\' fill=\'%23dd8844\'/%3E%3Ctext x=\'30\' y=\'200\' fill=\'%23ffffcc\' font-size=\'24\'%3ERARE%20DISPLAY%3C/text%3E%3C/svg%3E'">
-        </a-assets>
-    </a-scene>
-<script>
-    // ====================================
-    // MOBILE WALKING SYSTEM
-    // ====================================
-    
-    // Mobile walking state
-    const walkState = {
-        forward: false,
-        backward: false,
-        left: false,
-        right: false,
-        speed: 0.08,
-        velocity: { x: 0, z: 0 }
-    };
-    
-    // Device orientation
-    let initialOrientation = null;
-    let currentOrientation = { alpha: 0, beta: 0, gamma: 0 };
-    
-    function isMobile() {
-        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    }
-    
-    function setupMobileWalkMode() {
-        if (!isMobile()) return;
-        
-        console.log('🦶 Mobile walk mode activated');
-        
-        // Request device orientation permission (iOS)
-        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            // Show a button to request permission
-            const permBtn = document.createElement('button');
-            permBtn.textContent = 'TAP TO ENABLE MOVEMENT';
-            permBtn.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                padding: 20px 30px;
-                background: #ff3e41;
-                color: #ffde37;
-                border: 3px solid #ffde37;
-                font-size: 1.5rem;
-                border-radius: 15px;
-                z-index: 99999;
-                font-family: 'Bangers', cursive;
-                cursor: pointer;
-                box-shadow: 0 0 30px rgba(255, 62, 65, 0.7);
-            `;
-            document.body.appendChild(permBtn);
-            
-            permBtn.addEventListener('click', async () => {
-                try {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission === 'granted') {
-                        permBtn.remove();
-                        startOrientation();
-                        showWalkButtons();
-                    }
-                } catch (error) {
-                    console.error('Permission denied:', error);
-                    permBtn.textContent = 'MOVEMENT DISABLED';
-                    setTimeout(() => permBtn.remove(), 2000);
-                }
-            });
-        } else {
-            // Android - just start
-            startOrientation();
-            showWalkButtons();
+        // Stars
+        const starsGeo = new THREE.BufferGeometry();
+        const starsPos = new Float32Array(2000 * 3);
+        for (let i = 0; i < 2000 * 3; i += 3) {
+            starsPos[i] = (Math.random() - 0.5) * 200;
+            starsPos[i+1] = (Math.random() - 0.5) * 200;
+            starsPos[i+2] = (Math.random() - 0.5) * 200;
         }
-    }
-    
-    function startOrientation() {
-        window.addEventListener('deviceorientation', (event) => {
-            if (event.alpha === null) return;
-            
-            // Set initial orientation on first reading
-            if (!initialOrientation) {
-                initialOrientation = {
-                    alpha: event.alpha,
-                    beta: event.beta,
-                    gamma: event.gamma
-                };
-            }
-            
-            // Calculate relative orientation
-            currentOrientation.alpha = event.alpha - initialOrientation.alpha;
-            currentOrientation.beta = event.beta - initialOrientation.beta;
-            currentOrientation.gamma = event.gamma - initialOrientation.gamma;
-            
-            // Apply rotation to camera
-            const camera = document.querySelector('[camera]');
-            if (camera) {
-                const rotY = currentOrientation.alpha * (Math.PI / 180);
-                const rotX = Math.max(-0.5, Math.min(0.5, currentOrientation.beta * (Math.PI / 360)));
-                
-                camera.setAttribute('rotation', {
-                    x: rotX,
-                    y: rotY,
-                    z: 0
-                });
-            }
-        });
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
+        const stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({color: 0xffffff, size: 0.1}));
+        scene.add(stars);
         
-        // Add recalibration on double tap
-        document.addEventListener('dblclick', () => {
-            initialOrientation = null;
-            console.log('🔄 Orientation recalibrated');
-        });
-    }
-    
-    function showWalkButtons() {
-        // Remove existing controls if any
-        const existing = document.getElementById('mobile-walk-controls');
-        if (existing) existing.remove();
+        // Floor
+        const floor = new THREE.Mesh(
+            new THREE.CircleGeometry(8, 32),
+            new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7, side: THREE.DoubleSide })
+        );
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = 0;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        scene.add(new THREE.GridHelper(16, 20, 0xffde37, 0x333333));
         
-        const controls = document.createElement('div');
-        controls.id = 'mobile-walk-controls';
-        controls.innerHTML = `
-            <style>
-                #mobile-walk-controls {
-                    position: fixed;
-                    bottom: 30px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    display: grid;
-                    grid-template-columns: 70px 70px 70px;
-                    grid-template-rows: 70px 70px;
-                    gap: 10px;
-                    z-index: 10000;
-                    pointer-events: none;
-                }
-                .walk-btn {
-                    width: 70px;
-                    height: 70px;
-                    border-radius: 50%;
-                    background: rgba(26, 26, 26, 0.8);
-                    border: 3px solid #ffde37;
-                    color: #ffde37;
-                    font-size: 28px;
-                    cursor: pointer;
-                    pointer-events: auto;
-                    backdrop-filter: blur(5px);
-                    -webkit-backdrop-filter: blur(5px);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    touch-action: manipulation;
-                    user-select: none;
-                    -webkit-user-select: none;
-                    transition: all 0.1s ease;
-                }
-                .walk-btn:active, .walk-btn.pressed {
-                    background: #ff3e41 !important;
-                    transform: scale(0.9);
-                    box-shadow: 0 0 25px rgba(255, 62, 65, 0.8);
-                }
-                #btn-forward { grid-column: 2; grid-row: 1; }
-                #btn-left { grid-column: 1; grid-row: 2; }
-                #btn-right { grid-column: 3; grid-row: 2; }
-                #btn-backward { grid-column: 2; grid-row: 2; }
-                
-                @media (max-width: 480px) {
-                    .walk-btn {
-                        width: 55px;
-                        height: 55px;
-                        font-size: 22px;
-                    }
-                    #mobile-walk-controls {
-                        grid-template-columns: 55px 55px 55px;
-                        grid-template-rows: 55px 55px;
-                        gap: 8px;
-                        bottom: 20px;
-                    }
-                }
-            </style>
-            <button class="walk-btn" id="btn-forward">⬆</button>
-            <button class="walk-btn" id="btn-left">⬅</button>
-            <button class="walk-btn" id="btn-right">➡</button>
-            <button class="walk-btn" id="btn-backward">⬇</button>
-        `;
-        
-        document.body.appendChild(controls);
-        
-        // Setup button handlers
-        setupWalkButton('btn-forward', 'forward');
-        setupWalkButton('btn-backward', 'backward');
-        setupWalkButton('btn-left', 'left');
-        setupWalkButton('btn-right', 'right');
-        
-        // Add recalibration button
-        addRecalibrateButton();
-    }
-    
-    function setupWalkButton(id, direction) {
-        const btn = document.getElementById(id);
-        if (!btn) return;
-        
-        const activate = (e) => {
-            e.preventDefault();
-            walkState[direction] = true;
-            btn.classList.add('pressed');
+        // Card data
+        const cardData = {
+            "1": { title: "Pompa Paulie", series: "GPK Ultra 3D", value: 150.00 },
+            "2": { title: "Atomic Adam", series: "GPK Ultra 3D", value: 125.00 },
+            "3": { title: "Bionic Betty", series: "GPK Ultra 3D", value: 200.00 },
+            "4": { title: "Cosmic Carl", series: "GPK Ultra 3D", value: 175.00 },
+            "5": { title: "Digital Dave", series: "GPK Ultra 3D", value: 225.00 },
+            "6": { title: "Electric Eve", series: "GPK Ultra 3D", value: 250.00 },
+            "7": { title: "Fusion Frank", series: "GPK Ultra 3D", value: 200.00 },
+            "8": { title: "Gamma Gary", series: "GPK Ultra 3D", value: 275.00 },
+            "9": { title: "Hologram Helen", series: "GPK Ultra 3D", value: 300.00 },
+            "10": { title: "Ion Ivan", series: "GPK Ultra 3D", value: 325.00 },
+            "11": { title: "Jupiter Jane", series: "GPK Ultra 3D", value: 250.00 },
+            "12": { title: "Kinetic Kyle", series: "GPK Ultra 3D", value: 225.00 },
         };
         
-        const deactivate = (e) => {
-            e.preventDefault();
-            walkState[direction] = false;
-            btn.classList.remove('pressed');
-        };
-        
-        // Touch events for mobile
-        btn.addEventListener('touchstart', activate, { passive: false });
-        btn.addEventListener('touchend', deactivate);
-        btn.addEventListener('touchcancel', deactivate);
-        
-        // Mouse events for testing on desktop
-        btn.addEventListener('mousedown', activate);
-        btn.addEventListener('mouseup', deactivate);
-        btn.addEventListener('mouseleave', deactivate);
-    }
-    
-    function addRecalibrateButton() {
-        const recalBtn = document.createElement('button');
-        recalBtn.textContent = '🎯';
-        recalBtn.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(26, 26, 26, 0.8);
-            border: 2px solid #ffde37;
-            color: #ffde37;
-            font-size: 24px;
-            cursor: pointer;
-            z-index: 10000;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-        `;
-        
-        recalBtn.addEventListener('click', () => {
-            initialOrientation = null;
-            recalBtn.style.background = '#ff3e41';
-            setTimeout(() => {
-                recalBtn.style.background = 'rgba(26, 26, 26, 0.8)';
-            }, 200);
-        });
-        
-        document.body.appendChild(recalBtn);
-    }
-    
-    // Walking update loop
-    function updateWalking() {
-        if (!isMobile()) return;
-        
-        const cameraRig = document.getElementById('camera-rig');
-        if (!cameraRig) return;
-        
-        const camera = document.querySelector('[camera]');
-        if (!camera) return;
-        
-        // Get camera's forward direction
-        const rotation = camera.getAttribute('rotation');
-        const angle = rotation.y || 0;
-        
-        // Calculate movement direction
-        let moveX = 0;
-        let moveZ = 0;
-        
-        if (walkState.forward) {
-            moveX -= Math.sin(angle);
-            moveZ -= Math.cos(angle);
-        }
-        if (walkState.backward) {
-            moveX += Math.sin(angle);
-            moveZ += Math.cos(angle);
-        }
-        if (walkState.left) {
-            moveX -= Math.cos(angle);
-            moveZ += Math.sin(angle);
-        }
-        if (walkState.right) {
-            moveX += Math.cos(angle);
-            moveZ -= Math.sin(angle);
-        }
-        
-        // Normalize diagonal movement
-        const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
-        if (length > 0) {
-            moveX /= length;
-            moveZ /= length;
-        }
-        
-        // Apply movement
-        if (moveX !== 0 || moveZ !== 0) {
-            const pos = cameraRig.getAttribute('position');
-            const newX = pos.x + moveX * walkState.speed;
-            const newZ = pos.z + moveZ * walkState.speed;
-            
-            // Clamp to room boundaries
-            const clampedX = Math.max(-7, Math.min(7, newX));
-            const clampedZ = Math.max(-7, Math.min(7, newZ));
-            
-            cameraRig.setAttribute('position', {
-                x: clampedX,
-                y: pos.y,
-                z: clampedZ
-            });
-        }
-    }
-    
-    // Start walking loop
-    setInterval(updateWalking, 16); // ~60fps
-    
-    // ====================================
-    // LOADING SYSTEM
-    // ====================================
-    document.addEventListener('DOMContentLoaded', function() {
-        const loadingScreen = document.getElementById('loading-screen');
-        const progressBar = document.getElementById('progress-bar');
+        // Loading
+        const loadingManager = new THREE.LoadingManager();
+        const progressFill = document.getElementById('progress-fill');
         const loadingText = document.getElementById('loading-text');
-        const scene = document.querySelector('a-scene');
+        const loadingScreen = document.getElementById('loading-screen');
         
-        let progress = 0;
-        const loadingInterval = setInterval(() => {
-            progress += Math.random() * 10;
-            if (progress > 100) progress = 100;
-            progressBar.style.width = `${progress}%`;
-            
-            if (progress < 30) {
-                loadingText.textContent = "LOADING 3D ASSETS...";
-            } else if (progress < 70) {
-                loadingText.textContent = "PREPARING ENVIRONMENT...";
-            } else {
-                loadingText.textContent = "FINALIZING EXPERIENCE...";
-            }
-            
-            if (progress >= 100) {
-                clearInterval(loadingInterval);
-            }
-        }, 200);
-        
-        scene.addEventListener('loaded', function() {
-            clearInterval(loadingInterval);
-            progressBar.style.width = '100%';
-            loadingText.textContent = "WELCOME TO GPK ULTRA 3D!";
-            
-            setTimeout(() => {
-                loadingScreen.style.opacity = '0';
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    startRoomAnimations();
-                    setupScreenInteractions();
-                    setupNavigationControls();
-                    
-                    // Setup mobile walking
-                    setupMobileWalkMode();
-                }, 1000);
-            }, 500);
-        });
-    });
-    
-    // ====================================
-    // ROOM ANIMATIONS
-    // ====================================
-    function startRoomAnimations() {
-        const floatingCards = document.querySelectorAll('#floating-cards a-image');
-        floatingCards.forEach((card, index) => {
-            const delay = index * 500;
-            card.setAttribute('animation__float', {
-                property: 'position',
-                to: `${card.getAttribute('position').x} ${parseFloat(card.getAttribute('position').y) + 0.5} ${card.getAttribute('position').z}`,
-                dir: 'alternate',
-                dur: 3000 + (index * 500),
-                loop: true,
-                easing: 'easeInOutSine',
-                delay: delay
-            });
-            
-            card.setAttribute('animation__rotate', {
-                property: 'rotation',
-                to: `${card.getAttribute('rotation').x} ${parseFloat(card.getAttribute('rotation').y) + 10} ${card.getAttribute('rotation').z}`,
-                dir: 'alternate',
-                dur: 5000 + (index * 1000),
-                loop: true,
-                easing: 'easeInOutSine',
-                delay: delay
-            });
-        });
-    }
-    
-    // ====================================
-    // SCREEN INTERACTIONS
-    // ====================================
-    function setupScreenInteractions() {
-        const screens = document.querySelectorAll('.screen');
-        const screenInfo = document.getElementById('screen-info');
-        const screenTitle = document.getElementById('screen-title');
-        const screenDescription = document.getElementById('screen-description');
-        
-        const screenData = {
-            vintage: { title: "VINTAGE COLLECTION", description: "Original 1985 GPK cards", link: "vintage.html" },
-            modern: { title: "MODERN SERIES", description: "Latest GPK releases", link: "modern.html" },
-            wacky: { title: "WACKY PACKAGES", description: "Parody sticker collection", link: "wacky.html" },
-            custom: { title: "CUSTOM CARDS", description: "Fan-created artwork", link: "custom.html" },
-            trading: { title: "TRADING HUB", description: "Swap with collectors", link: "trading.html" },
-            "pack-opening": { title: "VIRTUAL PACKS", description: "Open digital packs", link: "packs.html" }
+        loadingManager.onProgress = (url, loaded, total) => {
+            const pct = Math.round((loaded / total) * 100);
+            progressFill.style.width = pct + '%';
+            loadingText.textContent = `Loading: ${pct}%`;
         };
         
-        screens.forEach(screen => {
-            const screenType = screen.getAttribute('screen-type');
+        loadingManager.onLoad = () => {
+            loadingScreen.classList.add('hidden');
+            document.getElementById('enter-button').style.display = 'block';
+        };
+        
+        const textureLoader = new THREE.TextureLoader(loadingManager);
+        const cardImages = [
+            'PompaPaulie.png','20250503011555.png','20250503034156.png',
+            '20250503012558.png','20250503022823.png','20250503032454.png',
+            '20250503035601.png','20250503214217.png','20250503212559.png',
+            '20250507032544.png',null,null
+        ];
+        
+        // Walls with cards
+        function createWall(pos, rotY, startIdx) {
+            const group = new THREE.Group();
+            const wall = new THREE.Mesh(
+                new THREE.BoxGeometry(5, 4, 0.1),
+                new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.5 })
+            );
+            wall.receiveShadow = true;
+            group.add(wall);
             
-            screen.addEventListener('mouseenter', () => {
-                const data = screenData[screenType];
-                if (data) {
-                    screenTitle.textContent = data.title;
-                    screenDescription.textContent = data.description;
-                    screenInfo.style.display = 'block';
+            const frameMat = new THREE.MeshStandardMaterial({ 
+                color: 0xffde37, roughness: 0.3, metalness: 0.7, emissive: new THREE.Color(0x332200)
+            });
+            
+            [-2, 0, 2].forEach((x, i) => {
+                const idx = startIdx + i;
+                
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.2, 0.05), frameMat);
+                frame.position.set(x, 0.5, 0.06);
+                group.add(frame);
+                
+                const mat = new THREE.MeshStandardMaterial({ roughness: 0.4 });
+                if (cardImages[idx]) {
+                    mat.map = textureLoader.load(cardImages[idx]);
+                } else {
+                    const c = document.createElement('canvas');
+                    c.width = 512; c.height = 712;
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = '#ff3e41'; ctx.fillRect(0,0,512,712);
+                    ctx.font = 'bold 40px Arial'; ctx.fillStyle = '#ffde37';
+                    ctx.textAlign = 'center'; ctx.fillText(`Card ${idx+1}`,256,356);
+                    mat.map = new THREE.CanvasTexture(c);
                 }
+                
+                const card = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.01), mat);
+                card.position.set(x, 0.5, 0.09);
+                card.userData = { type: 'card', cardId: String(idx+1) };
+                group.add(card);
             });
             
-            screen.addEventListener('mouseleave', () => {
-                screenInfo.style.display = 'none';
-            });
-            
-            screen.addEventListener('click', () => {
-                const data = screenData[screenType];
-                if (data) {
-                    screenDescription.textContent = `Loading ${data.title}...`;
-                    setTimeout(() => { screenInfo.style.display = 'none'; }, 2000);
+            group.position.copy(pos);
+            group.rotation.y = rotY;
+            return group;
+        }
+        
+        scene.add(createWall(new THREE.Vector3(0, 1.5, -4.5), 0, 0));
+        scene.add(createWall(new THREE.Vector3(4.5, 1.5, 0), Math.PI/2, 3));
+        scene.add(createWall(new THREE.Vector3(0, 1.5, 4.5), Math.PI, 6));
+        scene.add(createWall(new THREE.Vector3(-4.5, 1.5, 0), -Math.PI/2, 9));
+        
+        // Ceiling card
+        const ceilingCard = new THREE.Group();
+        ceilingCard.position.set(0, 5.5, 0);
+        const chain = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.05, 0.05, 1.5),
+            new THREE.MeshStandardMaterial({ color: 0xffde37, metalness: 0.8 })
+        );
+        chain.position.y = 0.75;
+        ceilingCard.add(chain);
+        
+        const featTex = textureLoader.load('PompaPaulie.png');
+        const featCard = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 1.6, 0.05),
+            new THREE.MeshStandardMaterial({ map: featTex })
+        );
+        featCard.position.y = -0.5;
+        ceilingCard.add(featCard);
+        scene.add(ceilingCard);
+        
+        // Character
+        const char = new THREE.Group();
+        char.position.set(-3, 0, -3);
+        char.userData = { type: 'character' };
+        char.add(new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,1), new THREE.MeshStandardMaterial({color:0xff3e41})));
+        char.children[0].position.y = 0.5;
+        char.add(new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshStandardMaterial({color:0xffde37})));
+        char.children[1].position.y = 1.1;
+        scene.add(char);
+        
+        // Tap to interact
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        renderer.domElement.addEventListener('click', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects(scene.children, true);
+            if (hits.length > 0) {
+                const obj = hits[0].object;
+                if (obj.userData.type === 'card') {
+                    const card = cardData[obj.userData.cardId];
+                    if (card) {
+                        document.getElementById('card-title').textContent = card.title;
+                        document.getElementById('card-series').textContent = card.series;
+                        document.getElementById('card-value').textContent = card.value.toFixed(2);
+                        document.getElementById('card-details').style.display = 'block';
+                        clearTimeout(window._t);
+                        window._t = setTimeout(() => {
+                            document.getElementById('card-details').style.display = 'none';
+                        }, 4000);
+                    }
+                } else if (obj.userData.type === 'character' || obj.parent?.userData?.type === 'character') {
+                    char.rotation.y += Math.PI;
                 }
-            });
-        });
-    }
-    
-    // ====================================
-    // NAVIGATION CONTROLS
-    // ====================================
-    function setupNavigationControls() {
-        document.getElementById('reset-view')?.addEventListener('click', () => {
-            const cameraRig = document.getElementById('camera-rig');
-            if (cameraRig) {
-                cameraRig.setAttribute('position', '0 1.6 0');
-                cameraRig.setAttribute('rotation', '0 0 0');
             }
         });
         
-        document.getElementById('help-btn')?.addEventListener('click', () => {
-            const screenInfo = document.getElementById('screen-info');
-            const screenTitle = document.getElementById('screen-title');
-            const screenDescription = document.getElementById('screen-description');
-            if (screenInfo && screenTitle && screenDescription) {
-                screenTitle.textContent = "CONTROLS";
-                screenDescription.textContent = isMobile() ? 
-                    "Tilt phone to look around. Use buttons to walk." : 
-                    "Mouse to look, WASD to move, click screens to interact";
-                screenInfo.style.display = 'block';
-                setTimeout(() => { screenInfo.style.display = 'none'; }, 4000);
+        // ====================================
+        // REAL WALKING - NO ARROWS, NO BUTTONS
+        // ====================================
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        
+        // Use DeviceMotion for walking (accelerometer)
+        // and DeviceOrientation for looking around
+        
+        let initOrientation = null;
+        let lastAccel = { x: 0, y: 0, z: 0 };
+        let velocity = { x: 0, z: 0 };
+        const walkScale = 0.003; // How fast real steps translate to world movement
+        
+        function requestPermissions() {
+            if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
+                return DeviceOrientationEvent.requestPermission();
+            }
+            return Promise.resolve('granted');
+        }
+        
+        function startSensors() {
+            // DeviceOrientation = look around
+            window.addEventListener('deviceorientation', (e) => {
+                if (e.alpha === null) return;
+                if (!initOrientation) {
+                    initOrientation = { alpha: e.alpha, beta: e.beta };
+                }
+                
+                const yaw = (e.alpha - initOrientation.alpha) * (Math.PI / 180);
+                const pitch = (e.beta - initOrientation.beta) * (Math.PI / 360);
+                
+                camera.rotation.set(
+                    Math.max(-0.8, Math.min(0.8, pitch)),
+                    yaw,
+                    0
+                );
+            });
+            
+            // DeviceMotion = walk
+            window.addEventListener('devicemotion', (e) => {
+                const accel = e.accelerationIncludingGravity;
+                if (!accel || accel.x === null) return;
+                
+                // Detect step motion from accelerometer
+                // Walking creates a distinct acceleration pattern
+                const dx = accel.x - lastAccel.x;
+                const dz = accel.z - lastAccel.z;
+                
+                // Only register significant movement (actual steps)
+                if (Math.abs(dx) > 0.5 || Math.abs(dz) > 0.5) {
+                    // Move in the direction the phone is facing
+                    const angle = camera.rotation.y;
+                    
+                    // Forward/backward movement from z-axis
+                    camera.position.x -= Math.sin(angle) * dz * walkScale;
+                    camera.position.z -= Math.cos(angle) * dz * walkScale;
+                    
+                    // Side-to-side movement from x-axis
+                    camera.position.x -= Math.cos(angle) * dx * walkScale;
+                    camera.position.z += Math.sin(angle) * dx * walkScale;
+                    
+                    // Clamp to room
+                    camera.position.x = Math.max(-7, Math.min(7, camera.position.x));
+                    camera.position.z = Math.max(-7, Math.min(7, camera.position.z));
+                }
+                
+                lastAccel = { x: accel.x, y: accel.y, z: accel.z };
+            });
+        }
+        
+        // Enter button - start the experience
+        document.getElementById('enter-button').addEventListener('click', async () => {
+            document.getElementById('enter-button').style.display = 'none';
+            
+            if (isMobile) {
+                const perm = await requestPermissions();
+                if (perm === 'granted') {
+                    document.getElementById('recalibrate-btn').style.display = 'block';
+                    startSensors();
+                }
             }
         });
-    }
-</script>
-    
+        
+        // Recalibrate button
+        document.getElementById('recalibrate-btn').addEventListener('click', () => {
+            initOrientation = null;
+            lastAccel = { x: 0, y: 0, z: 0 };
+        });
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            ceilingCard.rotation.y += 0.008;
+            stars.rotation.y += 0.0001;
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        console.log('🚶 Real walking mode active');
+        console.log('📱 Tilt phone to look');
+        console.log('🚶 Walk in real life to move in the gallery');
+        console.log('🎯 Tap top-right button to recalibrate');
+    </script>
 </body>
 </html>
