@@ -3,236 +3,453 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>GPK ULTRA 3D | Immersive Collector's Hub</title>
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://unpkg.com/aframe-environment-component@1.3.0/dist/aframe-environment-component.min.js"></script>
+    <title>GPK ULTRA 3D | Immersive Collector's Gallery</title>
+    <!-- Use single consistent A-Frame version -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <!-- Component for movement controls (WASD + pointer lock) -->
+    <script src="https://unpkg.com/aframe-movement-controls@1.3.0/dist/aframe-movement-controls.min.js"></script>
+    <!-- Component for better cursor interactions -->
     <script src="https://unpkg.com/aframe-event-set-component@5.0.0/dist/aframe-event-set-component.min.js"></script>
-    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-  </head>
-  <body>
+    <!-- Environment component for starry sky + ground -->
+    <script src="https://unpkg.com/aframe-environment-component@1.3.0/dist/aframe-environment-component.min.js"></script>
+    
     <style>
         body {
             margin: 0;
             overflow: hidden;
             font-family: 'Bangers', cursive;
         }
-        #enter-button {
+        #enter-btn {
             position: absolute;
-            top: 50%;
+            bottom: 30px;
             left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px 40px;
+            transform: translateX(-50%);
+            padding: 14px 32px;
             background: #ff3e41;
             color: #ffde37;
-            border: 5px solid #1a1a1a;
-            font-size: 2.5rem;
+            border: 4px solid #1a1a1a;
+            font-size: 1.8rem;
+            font-weight: bold;
             cursor: pointer;
             z-index: 10000;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 60px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.6);
+            font-family: 'Bangers', cursive;
+            letter-spacing: 2px;
+            transition: transform 0.2s, background 0.2s;
+        }
+        #enter-btn:hover {
+            background: #d32f2f;
+            transform: translateX(-50%) scale(1.05);
         }
         .ui-panel {
             position: fixed;
-            background: rgba(26, 26, 26, 0.9);
-            border: 3px solid #ffde37;
-            border-radius: 10px;
-            padding: 15px;
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: blur(8px);
+            border-left: 6px solid #ffde37;
+            border-radius: 12px;
+            padding: 16px 22px;
             z-index: 10000;
             color: white;
-            max-width: 300px;
+            width: 260px;
+            font-family: 'Bangers', cursive;
+            pointer-events: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            transition: opacity 0.3s ease;
         }
         #card-details {
-            top: 20px;
+            bottom: 20px;
             right: 20px;
+            top: auto;
             display: none;
+        }
+        .ui-panel h2 {
+            color: #ffde37;
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+        .ui-panel p {
+            margin: 8px 0;
+            font-size: 1.2rem;
+            font-family: monospace;
+        }
+        .instruction {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.6);
+            color: #ffde37;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        }
+        @media (max-width: 600px) {
+            .instruction { font-size: 10px; bottom: 10px; left: 10px; }
+            .ui-panel { width: 200px; padding: 10px 16px; }
+            .ui-panel h2 { font-size: 1.4rem; }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
 </head>
 <body>
-    <button id="enter-button">ENTER VR GALLERY</button>
+    <button id="enter-btn">🎴 ENTER GALLERY 🎴</button>
     
     <div id="card-details" class="ui-panel">
-        <h2 style="color:#ffde37;margin-bottom:10px;">CARD DETAILS</h2>
-        <p><strong>Title:</strong> <span id="card-title"></span></p>
-        <p><strong>Series:</strong> <span id="card-series"></span></p>
-        <p><strong>Value:</strong> $<span id="card-value"></span></p>
+        <h2>⚡ CARD INFO ⚡</h2>
+        <p><strong>🏆 Title:</strong> <span id="card-title"></span></p>
+        <p><strong>📀 Series:</strong> <span id="card-series"></span></p>
+        <p><strong>💰 Est. Value:</strong> $<span id="card-value"></span></p>
     </div>
+    <div class="instruction">🖱️ Click to lock cursor | WASD to move | 🖱️ Click on cards for details</div>
 
-    <a-scene vr-mode-ui="enabled: true" loading-screen="enabled: false" renderer="colorManagement: true">
-        <!-- Environment -->
-        <a-entity environment="preset: starry; groundColor: #1a1a1a; grid: none"></a-entity>
+    <a-scene 
+        vr-mode-ui="enabled: true" 
+        background="color: #0a0a2a"
+        renderer="colorManagement: true; antialias: true"
+        keyboard-shortcuts="enterVR: false"
+    >
+        <!-- ENVIRONMENT: Includes visible floor with grid (star preset gives cosmic floor) -->
+        <a-entity environment="preset: starry; groundColor: #2c2c3a; grid: cross; gridColor: #ffde37; groundY: -0.05; groundTexture: none"></a-entity>
         
-        <!-- Camera Rig -->
-        <a-entity id="rig" movement-controls="speed: 0.5">
-            <a-entity camera look-controls="pointerLockEnabled: true" position="0 1.6 0">
-                <a-entity cursor="fuse: true; fuseTimeout: 500" 
-                          position="0 0 -1"
-                          geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
-                          material="color: #ffde37; shader: flat">
+        <!-- ADDITIONAL VISIBLE FLOOR PLANE to ensure no gaps (semi-transparent reflective style) -->
+        <a-plane 
+            id="floor-plane"
+            position="0 -0.05 0" 
+            rotation="-90 0 0" 
+            width="20" 
+            height="20" 
+            color="#1e1e2e" 
+            roughness="0.7" 
+            metalness="0.2"
+            receive-shadow="true"
+            material="side: double; transparent: true; opacity: 0.85">
+        </a-plane>
+        
+        <!-- subtle grid helper on floor for better depth perception -->
+        <a-grid 
+            position="0 0 0" 
+            rotation="-90 0 0" 
+            width="20" 
+            height="20" 
+            divisions="20" 
+            color="#ffde37" 
+            opacity="0.35"
+            material="side: double">
+        </a-grid>
+        
+        <!-- Camera Rig with movement controls (smooth locomotion) -->
+        <a-entity id="rig" 
+                  movement-controls="speed: 1.2; constrainToNavMesh: false; enableJump: false"
+                  position="0 1.6 0">
+            <!-- Camera with look-controls for mouse/touch -->
+            <a-entity camera="fov: 75" look-controls="pointerLockEnabled: true" position="0 1.6 0">
+                <!-- Cursor component for clicking cards -->
+                <a-entity cursor="fuse: false; rayOrigin: mouse"
+                          position="0 0 -0.8"
+                          geometry="primitive: ring; radiusInner: 0.008; radiusOuter: 0.018"
+                          material="color: #ffde37; shader: flat; opacity: 0.9"
+                          raycaster="objects: .card; far: 10; interval: 50">
                 </a-entity>
             </a-entity>
         </a-entity>
+
+        <!-- ========= WALL CARDS (properly positioned on solid wall planes) ========= -->
+        <!-- We add invisible wall colliders for visual reference? not needed but cards now on walls with proper offset -->
         
-        <!-- NORTH WALL (3 cards) -->
-        <a-entity id="north-wall" position="0 1.5 -4" rotation="0 0 0">
-            <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="1">
-                <a-image src="#card1" width="0.8" height="1.1"></a-image>
+        <!-- NORTH WALL (z = -4.2, cards face south) -->
+        <a-entity id="north-wall-group" position="0 1.5 -4.2" rotation="0 0 0">
+            <!-- Card 1 left -->
+            <a-entity class="card" position="-2.2 0.6 0.05" rotation="0 0 0" data-card="1">
+                <a-image src="#card1" width="0.9" height="1.2" transparent="true"></a-image>
             </a-entity>
-            <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="2">
-                <a-image src="#card2" width="0.8" height="1.1"></a-image>
+            <!-- Card 2 center -->
+            <a-entity class="card" position="0 0.6 0.05" rotation="0 0 0" data-card="2">
+                <a-image src="#card2" width="0.9" height="1.2" transparent="true"></a-image>
             </a-entity>
-            <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="3">
-                <a-image src="#card3" width="0.8" height="1.1"></a-image>
+            <!-- Card 3 right -->
+            <a-entity class="card" position="2.2 0.6 0.05" rotation="0 0 0" data-card="3">
+                <a-image src="#card3" width="0.9" height="1.2" transparent="true"></a-image>
             </a-entity>
         </a-entity>
-        
-        <!-- EAST WALL (3 cards) -->
-        <a-entity id="east-wall" position="4 1.5 0" rotation="0 -90 0">
-            <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="4">
-                <a-image src="#card4" width="0.8" height="1.1"></a-image>
+
+        <!-- EAST WALL (x = 4.2, cards face west) -->
+        <a-entity id="east-wall-group" position="4.2 1.5 0" rotation="0 -90 0">
+            <a-entity class="card" position="-2.2 0.6 0.05" rotation="0 0 0" data-card="4">
+                <a-image src="#card4" width="0.9" height="1.2" transparent="true"></a-image>
             </a-entity>
-            <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="5">
-                <a-image src="#card5" width="0.8" height="1.1"></a-image>
+            <a-entity class="card" position="0 0.6 0.05" rotation="0 0 0" data-card="5">
+                <a-image src="#card5" width="0.9" height="1.2" transparent="true"></a-image>
             </a-entity>
-            <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="6">
-                <a-image src="#card6" width="0.8" height="1.1"></a-image>
-            </a-entity>
-        </a-entity>
-        
-        <!-- SOUTH WALL (3 cards) -->
-        <a-entity id="south-wall" position="0 1.5 4" rotation="0 180 0">
-            <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="7">
-                <a-image src="#card7" width="0.8" height="1.1"></a-image>
-            </a-entity>
-            <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="8">
-                <a-image src="#card8" width="0.8" height="1.1"></a-image>
-            </a-entity>
-            <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="9">
-                <a-image src="#card9" width="0.8" height="1.1"></a-image>
+            <a-entity class="card" position="2.2 0.6 0.05" rotation="0 0 0" data-card="6">
+                <a-image src="#card6" width="0.9" height="1.2" transparent="true"></a-image>
             </a-entity>
         </a-entity>
-        
-        <!-- WEST WALL (3 cards) -->
-        <a-entity id="west-wall" position="-4 1.5 0" rotation="0 90 0">
-            <a-entity class="card" position="-2 1.5 0" rotation="0 0 0" data-card="10">
-                <a-image src="#card10" width="0.8" height="1.1"></a-image>
+
+        <!-- SOUTH WALL (z = 4.2, cards face north) -->
+        <a-entity id="south-wall-group" position="0 1.5 4.2" rotation="0 180 0">
+            <a-entity class="card" position="-2.2 0.6 0.05" rotation="0 0 0" data-card="7">
+                <a-image src="#card7" width="0.9" height="1.2" transparent="true"></a-image>
             </a-entity>
-            <a-entity class="card" position="0 1.5 0" rotation="0 0 0" data-card="11">
-                <a-image src="#card11" width="0.8" height="1.1"></a-image>
+            <a-entity class="card" position="0 0.6 0.05" rotation="0 0 0" data-card="8">
+                <a-image src="#card8" width="0.9" height="1.2" transparent="true"></a-image>
             </a-entity>
-            <a-entity class="card" position="2 1.5 0" rotation="0 0 0" data-card="12">
-                <a-image src="#card12" width="0.8" height="1.1"></a-image>
+            <a-entity class="card" position="2.2 0.6 0.05" rotation="0 0 0" data-card="9">
+                <a-image src="#card9" width="0.9" height="1.2" transparent="true"></a-image>
             </a-entity>
         </a-entity>
-        
-        <!-- OVERHEAD DISPLAY CARDS (5 total) -->
-        <!-- Center Hanging Card -->
-        <a-entity position="0 3.5 0" rotation="-15 0 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 60000">
-            <a-image src="#featured1" width="1.5" height="2.1"></a-image>
+
+        <!-- WEST WALL (x = -4.2, cards face east) -->
+        <a-entity id="west-wall-group" position="-4.2 1.5 0" rotation="0 90 0">
+            <a-entity class="card" position="-2.2 0.6 0.05" rotation="0 0 0" data-card="10">
+                <a-image src="#card10" width="0.9" height="1.2" transparent="true"></a-image>
+            </a-entity>
+            <a-entity class="card" position="0 0.6 0.05" rotation="0 0 0" data-card="11">
+                <a-image src="#card11" width="0.9" height="1.2" transparent="true"></a-image>
+            </a-entity>
+            <a-entity class="card" position="2.2 0.6 0.05" rotation="0 0 0" data-card="12">
+                <a-image src="#card12" width="0.9" height="1.2" transparent="true"></a-image>
+            </a-entity>
+        </a-entity>
+
+        <!-- ========= OVERHEAD DISPLAY CARDS (rotating featured pieces) ========= -->
+        <!-- Center massive card -->
+        <a-entity position="0 3.3 0" rotation="-12 0 0" animation="property: rotation; to: -12 360 0; loop: true; dur: 48000; easing: linear">
+            <a-image src="#featured1" width="1.6" height="2.2" transparent="true" material="side: double"></a-image>
         </a-entity>
         
-        <!-- Four Corner Hanging Cards -->
-        <a-entity position="-3 3 -3" rotation="-10 45 0">
-            <a-image src="#featured2" width="1.2" height="1.7"></a-image>
+        <!-- Corner hanging cards with slow bob / rotation -->
+        <a-entity position="-3.2 3.0 -3.2" rotation="-8 35 0" animation="property: rotation; to: -8 395 0; loop: true; dur: 52000; easing: linear">
+            <a-image src="#featured2" width="1.3" height="1.8" transparent="true"></a-image>
         </a-entity>
         
-        <a-entity position="3 3 -3" rotation="-10 -45 0">
-            <a-image src="#featured3" width="1.2" height="1.7"></a-image>
+        <a-entity position="3.2 3.0 -3.2" rotation="-8 -35 0" animation="property: rotation; to: -8 -395 0; loop: true; dur: 50000; easing: linear">
+            <a-image src="#featured3" width="1.3" height="1.8" transparent="true"></a-image>
         </a-entity>
         
-        <a-entity position="3 3 3" rotation="-10 -135 0">
-            <a-image src="#featured4" width="1.2" height="1.7"></a-image>
+        <a-entity position="3.2 3.0 3.2" rotation="-8 -125 0" animation="property: rotation; to: -8 -485 0; loop: true; dur: 54000; easing: linear">
+            <a-image src="#featured4" width="1.3" height="1.8" transparent="true"></a-image>
         </a-entity>
         
-        <a-entity position="-3 3 3" rotation="-10 135 0">
-            <a-image src="#featured5" width="1.2" height="1.7"></a-image>
+        <a-entity position="-3.2 3.0 3.2" rotation="-8 125 0" animation="property: rotation; to: -8 485 0; loop: true; dur: 56000; easing: linear">
+            <a-image src="#featured5" width="1.3" height="1.8" transparent="true"></a-image>
         </a-entity>
+
+        <!-- Add soft lighting to enhance card visibility -->
+        <a-light type="ambient" color="#404060" intensity="0.65"></a-light>
+        <a-light type="directional" color="#ffde37" intensity="0.5" position="5 10 3" cast-shadow="true"></a-light>
+        <a-light type="point" intensity="0.4" color="#ccaa55" position="0 2 0" distance="8" decay="1.5"></a-light>
+        <a-light type="point" intensity="0.3" color="#88aaff" position="-2 1.5 3"></a-light>
+
+        <!-- decorative columns or subtle wall frames? not needed, but ensure floor visible -->
         
-        <!-- Assets -->
+        <!-- ========= ASSETS: all card images with fallback placeholder colors in case images missing ========= -->
         <a-assets>
-            <!-- Wall Cards (12 total) -->
-            <img id="card1" src="PompaPaulie.png">
-            <img id="card2" src="20250503011555.png">
-            <img id="card3" src="Os10_custom_wrapper.png">
-            <img id="card4" src="20250503012558.png">
-            <img id="card5" src="20250503022823.png">
-            <img id="card6" src="20250503032454.png">
-            <img id="card7" src="20250503034156.png">
-            <img id="card8" src="20250503035601.png">
-            <img id="card9" src="Os9_custom_wrapper.png">
-            <img id="card10" src="Os10_custom_wrapper.png">
-            <img id="card11" src="20250503012558.png">
-            <img id="card12" src="PompaPaulie.png">
+            <!-- Main wall cards (12) - using your specified image names, added dummy fallback color in case images not found -->
+            <img id="card1" src="PompaPaulie.png" crossorigin="anonymous" onerror="this.src='https://placehold.co/400x500/2c1e1f/ffde37?text=GPK+ULTRA+CARD'">
+            <img id="card2" src="20250503011555.png" onerror="this.src='https://placehold.co/400x500/1f2c2a/ffde37?text=3D+RARE'">
+            <img id="card3" src="Os10_custom_wrapper.png" onerror="this.src='https://placehold.co/400x500/2a1f3d/ffde37?text=OS10+WRAP'">
+            <img id="card4" src="20250503012558.png" onerror="this.src='https://placehold.co/400x500/3d2a1f/ffde37?text=SHINY+EDITION'">
+            <img id="card5" src="20250503022823.png" onerror="this.src='https://placehold.co/400x500/1f2c3a/ffde37?text=HOLO+3D'">
+            <img id="card6" src="20250503032454.png" onerror="this.src='https://placehold.co/400x500/2e1f2c/ffde37?text=LEGENDARY'">
+            <img id="card7" src="20250503034156.png" onerror="this.src='https://placehold.co/400x500/3a2c1f/ffde37?text=MYTHIC'">
+            <img id="card8" src="20250503035601.png" onerror="this.src='https://placehold.co/400x500/1f3a2c/ffde37?text=GOLD+FOIL'">
+            <img id="card9" src="Os9_custom_wrapper.png" onerror="this.src='https://placehold.co/400x500/2c3a2f/ffde37?text=OS9+RETRO'">
+            <img id="card10" src="Os10_custom_wrapper.png" onerror="this.src='https://placehold.co/400x500/3d1f2a/ffde37?text=ULTRA+ED'">
+            <img id="card11" src="20250503012558.png" onerror="this.src='https://placehold.co/400x500/2a2a3d/ffde37?text=SPECIAL+ART'">
+            <img id="card12" src="PompaPaulie.png" onerror="this.src='https://placehold.co/400x500/2c2c2c/ffde37?text=POMPA+PAULIE'">
             
-            <!-- Featured Cards (5 total) -->
-            <img id="featured1" src="PompaPaulie.png">
-            <img id="featured2" src="20250503011555.png">
-            <img id="featured3" src="Os10_custom_wrapper.png">
-            <img id="featured4" src="20250503012558.png">
-            <img id="featured5" src="20250503022823.png">
+            <!-- Featured overhead cards (5) -->
+            <img id="featured1" src="PompaPaulie.png" onerror="this.src='https://placehold.co/600x800/ff3e41/ffde37?text=FEATURED+CARD'">
+            <img id="featured2" src="20250503011555.png" onerror="this.src='https://placehold.co/500x700/3a1f2e/ffde37?text=CELEBRATION'">
+            <img id="featured3" src="Os10_custom_wrapper.png" onerror="this.src='https://placehold.co/500x700/2f2a3d/ffde37?text=VIP+ISSUE'">
+            <img id="featured4" src="20250503012558.png" onerror="this.src='https://placehold.co/500x700/2d3f2a/ffde37?text=RARE+DROP'">
+            <img id="featured5" src="20250503022823.png" onerror="this.src='https://placehold.co/500x700/2a2f3f/ffde37?text=HANGING+GEM'">
         </a-assets>
     </a-scene>
 
     <script>
-        // Card data - replace with your actual collection
+        // Comprehensive card metadata (collector's data)
         const cardData = {
-            "1": { title: "Pompa Paulie", series: "Ultra 3D", value: 150.00 },
-            "2": { title: "Ultra 3D", series: "Series 2025", value: 125.00 },
-            "3": { title: "OS10 Wrapper", series: "Vintage", value: 200.00 },
-            "4": { title: "3D Special", series: "Series 2025", value: 175.00 },
-            "5": { title: "Rare Edition", series: "Ultra 3D", value: 225.00 },
-            "6": { title: "Collector's Item", series: "Vintage", value: 250.00 },
-            "7": { title: "Limited Edition", series: "Series 2025", value: 275.00 },
-            "8": { title: "Gold Foil", series: "Ultra 3D", value: 300.00 },
-            "9": { title: "Platinum", series: "Vintage", value: 350.00 },
-            "10": { title: "Holographic", series: "Ultra 3D", value: 400.00 },
-            "11": { title: "First Edition", series: "Vintage", value: 450.00 },
-            "12": { title: "Prototype", series: "Ultra 3D", value: 500.00 }
+            "1": { title: "POMPA PAULIE", series: "Ultra 3D Genesis", value: 150.00 },
+            "2": { title: "COSMIC BLASTER", series: "2025 Neo", value: 125.00 },
+            "3": { title: "OS10 CUSTOM WRAPPER", series: "Vintage Archive", value: 200.00 },
+            "4": { title: "HOLO SHIFT", series: "3D Ultra", value: 175.00 },
+            "5": { title: "PHANTOM GLOW", series: "Rare Edition", value: 225.00 },
+            "6": { title: "NIGHTMARE FUEL", series: "Collector's Vault", value: 250.00 },
+            "7": { title: "GOLDEN DEMON", series: "Limited Run", value: 275.00 },
+            "8": { title: "CHROME ZOMBIE", series: "Ultra 3D Foil", value: 300.00 },
+            "9": { title: "OS9 LEGACY WRAP", series: "Vintage Special", value: 350.00 },
+            "10": { title: "DIMENSIONAL RIP", series: "Ultra 3D", value: 400.00 },
+            "11": { title: "FIRST EDITION SPARKLE", series: "Vintage Platinum", value: 450.00 },
+            "12": { title: "PAULIE PROTOTYPE", series: "Grail Series", value: 500.00 }
         };
 
-        // Initialize scene
-        document.getElementById('enter-button').addEventListener('click', function() {
-            this.style.display = 'none';
-            setupCardInteractions();
-        });
+        let detailsTimeout = null;
+        const detailsPanel = document.getElementById('card-details');
+        const cardTitleSpan = document.getElementById('card-title');
+        const cardSeriesSpan = document.getElementById('card-series');
+        const cardValueSpan = document.getElementById('card-value');
 
-        function setupCardInteractions() {
-            // Add click handlers to all cards
-            document.querySelectorAll('.card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const cardId = this.getAttribute('data-card');
-                    showCardDetails(cardId);
-                    
-                    // Add pulse animation
-                    this.setAttribute('animation', {
-                        property: 'scale',
-                        to: '1.1 1.1 1.1',
-                        dur: 300,
-                        easing: 'easeInOutQuad',
-                        dir: 'alternate'
-                    });
-                });
-            });
-        }
-
+        // Function to show card info with animation
         function showCardDetails(cardId) {
             const card = cardData[cardId];
             if (!card) return;
             
-            // Update UI
-            document.getElementById('card-title').textContent = card.title;
-            document.getElementById('card-series').textContent = card.series;
-            document.getElementById('card-value').textContent = card.value.toFixed(2);
+            // Update UI fields
+            cardTitleSpan.textContent = card.title;
+            cardSeriesSpan.textContent = card.series;
+            cardValueSpan.textContent = card.value.toFixed(2);
             
-            // Show panel
-            document.getElementById('card-details').style.display = 'block';
+            // Show panel with smooth effect
+            if (detailsPanel.style.display === 'block') {
+                // reset timer if already visible
+                if (detailsTimeout) clearTimeout(detailsTimeout);
+            } else {
+                detailsPanel.style.display = 'block';
+                detailsPanel.style.opacity = '0';
+                setTimeout(() => { detailsPanel.style.opacity = '1'; }, 20);
+            }
             
-            // Hide after 5 seconds
-            setTimeout(() => {
-                document.getElementById('card-details').style.display = 'none';
+            // Auto-hide after 5 seconds
+            if (detailsTimeout) clearTimeout(detailsTimeout);
+            detailsTimeout = setTimeout(() => {
+                detailsPanel.style.opacity = '0';
+                setTimeout(() => {
+                    detailsPanel.style.display = 'none';
+                    detailsPanel.style.opacity = '1';
+                }, 250);
             }, 5000);
         }
+        
+        // Function to setup interaction after scene loads and enter button clicked
+        function setupGallery() {
+            const scene = document.querySelector('a-scene');
+            if (!scene) return;
+            
+            // Wait for all entities to be ready, then attach click events via raycaster
+            // Because we use cursor component with raycaster objects: .card, we also add click event using standard DOM events? 
+            // In A-Frame, best way is addEventListener on each card entity after they load.
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.card');
+                if (cards.length === 0) {
+                    console.warn("Cards not found yet, retrying...");
+                    setTimeout(() => setupGallery(), 300);
+                    return;
+                }
+                cards.forEach(card => {
+                    // Remove existing listeners to avoid duplicates
+                    card.removeEventListener('click', cardClickHandler);
+                    card.addEventListener('click', cardClickHandler);
+                    
+                    // Also add hover effect with scale on mouseenter/mouseleave (using cursor)
+                    card.addEventListener('mouseenter', () => {
+                        card.setAttribute('animation__hover', {
+                            property: 'scale',
+                            to: '1.08 1.08 1.08',
+                            dur: 150,
+                            easing: 'easeOutQuad'
+                        });
+                    });
+                    card.addEventListener('mouseleave', () => {
+                        card.setAttribute('animation__hoverback', {
+                            property: 'scale',
+                            to: '1 1 1',
+                            dur: 200,
+                            easing: 'easeOutQuad'
+                        });
+                    });
+                });
+                console.log(`✅ Gallery active: ${cards.length} cards ready for interaction.`);
+            }, 500);
+        }
+        
+        function cardClickHandler(event) {
+            // Retrieve data-card attribute from this card entity
+            const cardId = this.getAttribute('data-card');
+            if (cardId) {
+                showCardDetails(cardId);
+                // Add quick pulse via temp animation
+                this.setAttribute('animation__click', {
+                    property: 'scale',
+                    from: '1 1 1',
+                    to: '1.15 1.15 1.15',
+                    dur: 180,
+                    easing: 'easeOutQuad',
+                    dir: 'alternate',
+                    loop: false
+                });
+                setTimeout(() => {
+                    if (this.getAttribute('animation__click')) {
+                        this.removeAttribute('animation__click');
+                    }
+                }, 200);
+            }
+        }
+        
+        // Enter VR / immersive mode handler: remove button and activate pointer lock & interactions
+        const enterBtn = document.getElementById('enter-btn');
+        enterBtn.addEventListener('click', () => {
+            enterBtn.style.display = 'none';
+            
+            // Request pointer lock for look-controls if needed (optional)
+            const cameraEl = document.querySelector('[camera]');
+            if (cameraEl && cameraEl.components['look-controls']) {
+                // Simulate click on canvas to enable pointerlock on user interaction
+                document.body.click();
+            }
+            
+            // Enable fullscreen / VR mode if desired, but just remove button and setup interactions
+            // Also ensure that scene is active and floor/walls appear
+            const sceneEl = document.querySelector('a-scene');
+            if (sceneEl && sceneEl.isMobile) {
+                // mobile handling - just show that navigation works
+            }
+            
+            setupGallery();
+            
+            // Extra: show a small hint in console and ensure floor material is visible
+            console.log("🎮 Gallery immersive mode active | Move with WASD / arrow keys, click cards for info.");
+            
+            // Safety: also re-center camera if any misposition? Not needed, but good.
+            const rig = document.getElementById('rig');
+            if (rig && rig.object3D) {
+                rig.object3D.position.set(0, 1.6, 0);
+            }
+        });
+        
+        // Preload images? double-check floor presence: ensure grid and plane recast shadow
+        window.addEventListener('load', () => {
+            // provide a small fallback note in console if images missing
+            console.log("🏛️ GPK Ultra Gallery Loaded — The floor is visible with grid. Click ENTER to lock controls.");
+            // small fix for cursor visibility in canvas
+            const canvas = document.querySelector('canvas');
+            if (canvas) canvas.style.cursor = 'crosshair';
+        });
+        
+        // Additional fix for AR/VR "floor not visible" by adding an extra ground plane if environment failed
+        // Already added explicit plane + grid, but to be robust check after scene load
+        setTimeout(() => {
+            const existingFloor = document.querySelector('#floor-plane');
+            if (!existingFloor) {
+                console.log("Injecting floor fallback");
+                const scene = document.querySelector('a-scene');
+                if (scene) {
+                    const fallbackPlane = document.createElement('a-plane');
+                    fallbackPlane.setAttribute('position', '0 -0.1 0');
+                    fallbackPlane.setAttribute('rotation', '-90 0 0');
+                    fallbackPlane.setAttribute('width', '25');
+                    fallbackPlane.setAttribute('height', '25');
+                    fallbackPlane.setAttribute('color', '#2a2a35');
+                    fallbackPlane.setAttribute('material', 'roughness: 0.8; metalness: 0.1');
+                    scene.appendChild(fallbackPlane);
+                }
+            }
+        }, 200);
     </script>
 </body>
 </html>
