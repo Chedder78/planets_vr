@@ -407,6 +407,31 @@
         window.addEventListener('load', () => {
             console.log("🏛️ GPK Ultra Gallery — Elevated art display, colorful stars, no face-blocking cards.");
         });
+
+        // Add to your script section
+AFRAME.registerComponent('mobile-walk', {
+  init: function() {
+    this.moveSpeed = 0.1;
+    this.setupOrientation();
+    this.setupTouchControls();
+  },
+  
+  setupOrientation: function() {
+    window.addEventListener('deviceorientation', (e) => {
+      // Rotate camera based on phone orientation
+      const camera = document.querySelector('[camera]');
+      camera.setAttribute('rotation', {
+        x: e.beta * 0.5,
+        y: e.alpha,
+        z: 0
+      });
+    });
+  },
+  
+  setupTouchControls: function() {
+    // Add on-screen movement buttons
+  }
+});
     </script>
 </body>
 </html>
