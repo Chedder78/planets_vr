@@ -1,12 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+// REMOVED: GLTFLoader - not used anywhere
 
 const CosmicLandscape = () => {
   const mountRef = useRef(null);
@@ -22,20 +22,17 @@ const CosmicLandscape = () => {
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
     camera.position.set(0, 5, 15);
 
-    // Initialize renderer with WebXR
+    // Initialize renderer - NO WebXR for mobile walking
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.xr.enabled = true;
+    // REMOVED: renderer.xr.enabled = true - no VR split screen
     mountRef.current.appendChild(renderer.domElement);
-    mountRef.current.appendChild(VRButton.createButton(renderer));
-
-    // A-Frame compatibility layer
-    const aframeScript = document.createElement('script');
-    aframeScript.src = 'https://aframe.io/releases/1.7.0/aframe.min.js';
-    document.head.appendChild(aframeScript);
+    
+    // REMOVED: VRButton - no VR mode
+    // REMOVED: A-Frame script injection - conflicts with Three.js
 
     // Post-processing
     const composer = new EffectComposer(renderer);
@@ -53,40 +50,53 @@ const CosmicLandscape = () => {
 
     // Terrain generation
     const terrainGeometry = new THREE.PlaneGeometry(500, 500, 128, 128);
-    const terrainMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x1a3f3e,
-      displacementScale: 15,
-      metalness: 0.1,
-      roughness: 0.8
-    });
     
     // Generate heightmap
-    const heightmap = new Float32Array(terrainGeometry.attributes.position.count);
-    for (let i = 0; i < heightmap.length; i++) {
-      const x = terrainGeometry.attributes.position.getX(i);
-      const z = terrainGeometry.attributes.position.getZ(i);
-      heightmap[i] = Math.sin(x * 0.05) * Math.cos(z * 0.05) * 5 + 
-                     Math.random() * 2;
+    const positions = terrainGeometry.attributes.position;
+    const heightmap = new Float32Array(positions.count);
+    
+    for (let i = 0; i < positions.count; i++) {
+      const x = positions.getX(i);
+      const z = positions.getZ(i);
+      heightmap[i] = Math.sin(x * 0.05) * Math.cos(z * 0.05) * 5 + Math.random() * 2;
     }
-    terrainGeometry.setAttribute('position', new THREE.BufferAttribute(heightmap, 1));
+    
+    // FIXED: Properly set heightmap as Y displacement
+    // The original code was replacing the entire position attribute with height values
+    for (let i = 0; i < positions.count; i++) {
+      positions.setY(i, heightmap[i]);
+    }
     terrainGeometry.computeVertexNormals();
+    
+    const terrainMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x1a3f3e,
+      roughness: 0.8,
+      metalness: 0.1
+    });
     
     const terrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
     terrain.rotation.x = -Math.PI / 2;
     terrain.receiveShadow = true;
     scene.add(terrain);
 
-    // Water
+    // Water - load texture first
+    const waterNormalsTexture = new THREE.TextureLoader().load(
+      'https://threejs.org/examples/textures/waternormals.jpg',
+      undefined,
+      undefined,
+      () => console.error('Failed to load water normals texture')
+    );
+    
     const waterGeometry = new THREE.PlaneGeometry(1000, 1000);
     const water = new Water(waterGeometry, {
       textureWidth: 512,
       textureHeight: 512,
-      waterNormals: new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg'),
-      sunDirection: new THREE.Vector3(),
+      waterNormals: waterNormalsTexture,
+      sunDirection: new THREE.Vector3(0, 1, 0),
       sunColor: 0xffffff,
       waterColor: 0x001e0f,
       distortionScale: 3.7,
-      fog: scene.fog !== undefined
+      fog: !!scene.fog
     });
     water.rotation.x = -Math.PI / 2;
     water.position.y = 1;
@@ -118,22 +128,23 @@ const CosmicLandscape = () => {
 
     // Celestial bodies
     const starGeometry = new THREE.BufferGeometry();
+    const starVertices = new Float32Array(10000 * 3);
+    
+    for (let i = 0; i < 10000 * 3; i += 3) {
+      starVertices[i] = (Math.random() - 0.5) * 2000;
+      starVertices[i+1] = (Math.random() - 0.5) * 2000;
+      starVertices[i+2] = (Math.random() - 0.5) * 2000;
+    }
+    
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(starVertices, 3));
+    
     const starMaterial = new THREE.PointsMaterial({
       color: 0xffffff,
       size: 0.2,
       transparent: true,
       opacity: 0.8
     });
-
-    const starVertices = [];
-    for (let i = 0; i < 10000; i++) {
-      const x = (Math.random() - 0.5) * 2000;
-      const y = (Math.random() - 0.5) * 2000;
-      const z = (Math.random() - 0.5) * 2000;
-      starVertices.push(x, y, z);
-    }
-
-    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+    
     const stars = new THREE.Points(starGeometry, starMaterial);
     scene.add(stars);
 
@@ -158,7 +169,7 @@ const CosmicLandscape = () => {
     });
 
     for (let i = 0; i < 200; i++) {
-      const plant = new THREE.Mesh(plantGeometry, plantMaterial);
+      const plant = new THREE.Mesh(plantGeometry, plantMaterial.clone()); // Clone material to allow individual control
       plant.position.set(
         (Math.random() - 0.5) * 400,
         0,
@@ -166,66 +177,45 @@ const CosmicLandscape = () => {
       );
       plant.rotation.x = Math.random() * Math.PI;
       plant.castShadow = true;
+      plant.userData = { interactive: true, baseIntensity: 0.5 + Math.random() * 0.5 };
       scene.add(plant);
       bioluminescentPlants.push(plant);
     }
 
-    // Controller setup
-    const controllerModelFactory = new XRControllerModelFactory();
-    const controllers = [];
+    // FIXED: Removed XR controller setup - not available without renderer.xr.enabled
+    // Instead, use touch/mouse interaction for mobile
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
 
-    function setupControllers() {
-      for (let i = 0; i < 2; i++) {
-        const controller = renderer.xr.getController(i);
-        controller.addEventListener('selectstart', onSelectStart);
-        controller.addEventListener('selectend', onSelectEnd);
-        scene.add(controller);
-
-        const grip = renderer.xr.getControllerGrip(i);
-        grip.add(controllerModelFactory.createControllerModel(grip));
-        scene.add(grip);
-
-        controllers.push(controller);
-      }
-    }
-
-    function onSelectStart(event) {
-      const controller = event.target;
-      const intersections = getIntersections(controller);
+    function onPointerDown(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      
+      raycaster.setFromCamera(mouse, camera);
+      const intersections = raycaster.intersectObjects(bioluminescentPlants);
       
       if (intersections.length > 0) {
-        const object = intersections[0].object;
-        if (object.userData.interactive) {
-          object.material.emissiveIntensity = 2;
+        const plant = intersections[0].object;
+        if (plant.userData.interactive) {
+          plant.material.emissiveIntensity = 2;
+          plant.scale.set(1.3, 1.3, 1.3);
         }
       }
     }
-
-    function onSelectEnd(event) {
-      const controller = event.target;
-      const intersections = getIntersections(controller);
-      
-      if (intersections.length > 0) {
-        const object = intersections[0].object;
-        if (object.userData.interactive) {
-          object.material.emissiveIntensity = 0.5;
-        }
-      }
+    
+    function onPointerUp() {
+      bioluminescentPlants.forEach(plant => {
+        plant.material.emissiveIntensity = plant.userData.baseIntensity;
+        plant.scale.set(1, 1, 1);
+      });
     }
 
-    function getIntersections(controller) {
-      const tempMatrix = new THREE.Matrix4();
-      tempMatrix.identity().extractRotation(controller.matrixWorld);
-      
-      const raycaster = new THREE.Raycaster();
-      raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-      raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-      
-      return raycaster.intersectObjects(bioluminescentPlants);
-    }
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    renderer.domElement.addEventListener('pointerup', onPointerUp);
 
-    // Animation loop
+    // FIXED: Animation loop - no recursive setAnimationLoop
     const clock = new THREE.Clock();
+    
     const animate = () => {
       const delta = clock.getDelta();
       
@@ -234,17 +224,31 @@ const CosmicLandscape = () => {
       
       // Animate plants
       bioluminescentPlants.forEach(plant => {
-        plant.material.emissiveIntensity = 0.5 + Math.sin(clock.elapsedTime * 2) * 0.5;
+        const baseIntensity = plant.userData.baseIntensity || 0.5;
+        plant.material.emissiveIntensity = baseIntensity + Math.sin(clock.elapsedTime * 2 + plant.position.x) * 0.3;
       });
       
       // Rotate gas giant
       gasGiant.rotation.y += delta * 0.05;
       
+      // Rotate stars slowly
+      stars.rotation.y += delta * 0.01;
+      
       // Update composer
       composer.render();
       
-      renderer.setAnimationLoop(animate);
+      // Update terrain wave effect
+      const time = clock.elapsedTime * 0.5;
+      for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i);
+        const z = positions.getZ(i);
+        positions.setY(i, heightmap[i] + Math.sin(x * 0.1 + time) * Math.cos(z * 0.1 + time) * 0.5);
+      }
+      terrainGeometry.attributes.position.needsUpdate = true;
+      terrainGeometry.computeVertexNormals();
     };
+
+    renderer.setAnimationLoop(animate);
 
     // Handle resize
     const handleResize = () => {
@@ -255,16 +259,29 @@ const CosmicLandscape = () => {
     };
     window.addEventListener('resize', handleResize);
 
-    // Start rendering
-    setupControllers();
-    animate();
-    setLoading(false);
+    // Simulate loading progress
+    let loadProgress = 0;
+    const progressInterval = setInterval(() => {
+      loadProgress += Math.random() * 30;
+      if (loadProgress >= 100) {
+        loadProgress = 100;
+        clearInterval(progressInterval);
+        setLoading(false);
+      }
+      setProgress(loadProgress);
+    }, 300);
 
     // Cleanup
     return () => {
+      clearInterval(progressInterval);
       window.removeEventListener('resize', handleResize);
-      mountRef.current.removeChild(renderer.domElement);
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
+      renderer.setAnimationLoop(null);
       renderer.dispose();
+      if (mountRef.current && mountRef.current.contains(renderer.domElement)) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
     };
   }, []);
 
@@ -278,9 +295,31 @@ const CosmicLandscape = () => {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           color: 'white',
-          fontSize: '24px'
+          fontSize: '24px',
+          fontFamily: 'Arial, sans-serif',
+          textAlign: 'center',
+          background: 'rgba(0,0,0,0.7)',
+          padding: '20px 40px',
+          borderRadius: '10px',
+          border: '2px solid #4a86e8'
         }}>
-          Loading cosmic landscape... {Math.round(progress)}%
+          <div style={{ marginBottom: '10px' }}>🌌 Loading cosmic landscape...</div>
+          <div style={{
+            width: '200px',
+            height: '6px',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '3px',
+            overflow: 'hidden',
+            margin: '0 auto'
+          }}>
+            <div style={{
+              width: `${progress}%`,
+              height: '100%',
+              background: 'linear-gradient(90deg, #4a86e8, #00ff00)',
+              transition: 'width 0.3s'
+            }} />
+          </div>
+          <div style={{ marginTop: '10px', fontSize: '14px' }}>{Math.round(progress)}%</div>
         </div>
       )}
     </>
