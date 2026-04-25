@@ -264,11 +264,17 @@
         </a-entity>
 
         <!-- ========= CEILING / OVERHEAD FEATURED CARDS (RAISED HIGH, NO FLOATING IN FACE) ========= -->
-        <!-- Center masterpiece suspended at 3.6m height, rotates slowly, well above eye level -->
-        <a-entity position="0 3.7 0" rotation="-8 0 0" animation="property: rotation; to: -8 360 0; loop: true; dur: 55000; easing: linear">
-            <a-image src="#featured1" width="1.5" height="2.0" transparent="true" material="side: double; emissive: #331a00; emissiveIntensity: 0.15"></a-image>
-        </a-entity>
-        
+        <!-- Rotating Card Chandelier - UP ON THE CEILING WHERE IT BELONGS -->
+<a-entity position="0 5.5 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 30000">
+    <!-- Hanging chain/rod -->
+    <a-cylinder position="0 0.5 0" radius="0.05" height="1" color="#FFDE37" metalness="0.8"></a-cylinder>
+    
+    <!-- The card hanging down -->
+    <a-image src="#featured-card" width="1.2" height="1.6" position="0 -0.5 0" rotation="0 0 0"></a-image>
+    
+    <!-- Spotlight shining down -->
+    <a-light type="spot" position="0 0.3 0" rotation="-90 0 0" color="#FFDE37" intensity="0.8" distance="8" angle="30"></a-light>
+</a-entity>
         <!-- Four corner hanging gallery pieces at height 3.4m - well above head, no obstruction -->
         <a-entity position="-3.5 3.5 -3.5" rotation="-6 45 0" animation="property: rotation; to: -6 405 0; loop: true; dur: 62000; easing: linear">
             <a-image src="#featured2" width="1.2" height="1.7" transparent="true"></a-image>
@@ -323,115 +329,469 @@
             <img id="featured5" src="20250503022823.png" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 400\'%3E%3Crect width=\'300\' height=\'400\' fill=\'%23dd8844\'/%3E%3Ctext x=\'30\' y=\'200\' fill=\'%23ffffcc\' font-size=\'24\'%3ERARE%20DISPLAY%3C/text%3E%3C/svg%3E'">
         </a-assets>
     </a-scene>
-
-    <script>
-        // Card metadata (art collection)
-        const cardData = {
-            "1": { title: "POMPA PAULIE", series: "ULTRA 3D Genesis", value: 150.00 },
-            "2": { title: "COSMIC BLASTER", series: "2025 Neo", value: 125.00 },
-            "3": { title: "OS10 CUSTOM WRAPPER", series: "Vintage Archive", value: 200.00 },
-            "4": { title: "HOLO SHIFT", series: "3D Ultra", value: 175.00 },
-            "5": { title: "PHANTOM GLOW", series: "Rare Edition", value: 225.00 },
-            "6": { title: "NIGHTMARE FUEL", series: "Collector's Vault", value: 250.00 },
-            "7": { title: "GOLDEN DEMON", series: "Limited Run", value: 275.00 },
-            "8": { title: "CHROME ZOMBIE", series: "Ultra 3D Foil", value: 300.00 },
-            "9": { title: "OS9 LEGACY WRAP", series: "Vintage Special", value: 350.00 },
-            "10": { title: "DIMENSIONAL RIP", series: "Ultra 3D", value: 400.00 },
-            "11": { title: "FIRST EDITION SPARKLE", series: "Vintage Platinum", value: 450.00 },
-            "12": { title: "PAULIE PROTOTYPE", series: "Grail Series", value: 500.00 }
-        };
-
-        let detailsTimeout = null;
-        const panel = document.getElementById('card-details');
-        const titleSpan = document.getElementById('card-title');
-        const seriesSpan = document.getElementById('card-series');
-        const valueSpan = document.getElementById('card-value');
-
-        function showCardDetails(cardId) {
-            const card = cardData[cardId];
-            if (!card) return;
-            titleSpan.textContent = card.title;
-            seriesSpan.textContent = card.series;
-            valueSpan.textContent = card.value.toFixed(2);
+<script>
+    // ====================================
+    // MOBILE WALKING SYSTEM
+    // ====================================
+    
+    // Mobile walking state
+    const walkState = {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        speed: 0.08,
+        velocity: { x: 0, z: 0 }
+    };
+    
+    // Device orientation
+    let initialOrientation = null;
+    let currentOrientation = { alpha: 0, beta: 0, gamma: 0 };
+    
+    function isMobile() {
+        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+    
+    function setupMobileWalkMode() {
+        if (!isMobile()) return;
+        
+        console.log('🦶 Mobile walk mode activated');
+        
+        // Request device orientation permission (iOS)
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // Show a button to request permission
+            const permBtn = document.createElement('button');
+            permBtn.textContent = 'TAP TO ENABLE MOVEMENT';
+            permBtn.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                padding: 20px 30px;
+                background: #ff3e41;
+                color: #ffde37;
+                border: 3px solid #ffde37;
+                font-size: 1.5rem;
+                border-radius: 15px;
+                z-index: 99999;
+                font-family: 'Bangers', cursive;
+                cursor: pointer;
+                box-shadow: 0 0 30px rgba(255, 62, 65, 0.7);
+            `;
+            document.body.appendChild(permBtn);
             
-            if (panel.style.display === 'block') {
-                if (detailsTimeout) clearTimeout(detailsTimeout);
-            } else {
-                panel.style.display = 'block';
-                panel.style.opacity = '0';
-                setTimeout(() => panel.style.opacity = '1', 30);
-            }
-            if (detailsTimeout) clearTimeout(detailsTimeout);
-            detailsTimeout = setTimeout(() => {
-                panel.style.opacity = '0';
-                setTimeout(() => {
-                    panel.style.display = 'none';
-                    panel.style.opacity = '1';
-                }, 250);
-            }, 5000);
-        }
-
-        function setupInteractions() {
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                card.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = card.getAttribute('data-card');
-                    if (id) showCardDetails(id);
-                    card.setAttribute('animation__click', {
-                        property: 'scale', to: '1.1 1.1 1.1', dur: 150, easing: 'easeOutQuad', dir: 'alternate'
-                    });
-                    setTimeout(() => card.removeAttribute('animation__click'), 200);
-                });
-                card.addEventListener('mouseenter', () => {
-                    card.setAttribute('animation__hover', { property: 'scale', to: '1.05 1.05 1.05', dur: 120 });
-                });
-                card.addEventListener('mouseleave', () => {
-                    card.setAttribute('animation__hoverback', { property: 'scale', to: '1 1 1', dur: 150 });
-                });
+            permBtn.addEventListener('click', async () => {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        permBtn.remove();
+                        startOrientation();
+                        showWalkButtons();
+                    }
+                } catch (error) {
+                    console.error('Permission denied:', error);
+                    permBtn.textContent = 'MOVEMENT DISABLED';
+                    setTimeout(() => permBtn.remove(), 2000);
+                }
             });
-            console.log(`✨ Gallery Ready: ${cards.length} artworks at perfect eye level`);
+        } else {
+            // Android - just start
+            startOrientation();
+            showWalkButtons();
         }
-
-        document.getElementById('enter-btn').addEventListener('click', () => {
-            document.getElementById('enter-btn').style.display = 'none';
-            // Focus canvas for pointer lock
-            const canvas = document.querySelector('canvas');
-            if (canvas) canvas.click();
-            setTimeout(setupInteractions, 400);
-            // recenter camera
-            const rig = document.getElementById('rig');
-            if (rig) rig.object3D.position.set(0, 1.7, 0);
+    }
+    
+    function startOrientation() {
+        window.addEventListener('deviceorientation', (event) => {
+            if (event.alpha === null) return;
+            
+            // Set initial orientation on first reading
+            if (!initialOrientation) {
+                initialOrientation = {
+                    alpha: event.alpha,
+                    beta: event.beta,
+                    gamma: event.gamma
+                };
+            }
+            
+            // Calculate relative orientation
+            currentOrientation.alpha = event.alpha - initialOrientation.alpha;
+            currentOrientation.beta = event.beta - initialOrientation.beta;
+            currentOrientation.gamma = event.gamma - initialOrientation.gamma;
+            
+            // Apply rotation to camera
+            const camera = document.querySelector('[camera]');
+            if (camera) {
+                const rotY = currentOrientation.alpha * (Math.PI / 180);
+                const rotX = Math.max(-0.5, Math.min(0.5, currentOrientation.beta * (Math.PI / 360)));
+                
+                camera.setAttribute('rotation', {
+                    x: rotX,
+                    y: rotY,
+                    z: 0
+                });
+            }
         });
-
-        window.addEventListener('load', () => {
-            console.log("🏛️ GPK Ultra Gallery — Elevated art display, colorful stars, no face-blocking cards.");
+        
+        // Add recalibration on double tap
+        document.addEventListener('dblclick', () => {
+            initialOrientation = null;
+            console.log('🔄 Orientation recalibrated');
         });
-
-        // Add to your script section
-AFRAME.registerComponent('mobile-walk', {
-  init: function() {
-    this.moveSpeed = 0.1;
-    this.setupOrientation();
-    this.setupTouchControls();
-  },
-  
-  setupOrientation: function() {
-    window.addEventListener('deviceorientation', (e) => {
-      // Rotate camera based on phone orientation
-      const camera = document.querySelector('[camera]');
-      camera.setAttribute('rotation', {
-        x: e.beta * 0.5,
-        y: e.alpha,
-        z: 0
-      });
+    }
+    
+    function showWalkButtons() {
+        // Remove existing controls if any
+        const existing = document.getElementById('mobile-walk-controls');
+        if (existing) existing.remove();
+        
+        const controls = document.createElement('div');
+        controls.id = 'mobile-walk-controls';
+        controls.innerHTML = `
+            <style>
+                #mobile-walk-controls {
+                    position: fixed;
+                    bottom: 30px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    display: grid;
+                    grid-template-columns: 70px 70px 70px;
+                    grid-template-rows: 70px 70px;
+                    gap: 10px;
+                    z-index: 10000;
+                    pointer-events: none;
+                }
+                .walk-btn {
+                    width: 70px;
+                    height: 70px;
+                    border-radius: 50%;
+                    background: rgba(26, 26, 26, 0.8);
+                    border: 3px solid #ffde37;
+                    color: #ffde37;
+                    font-size: 28px;
+                    cursor: pointer;
+                    pointer-events: auto;
+                    backdrop-filter: blur(5px);
+                    -webkit-backdrop-filter: blur(5px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    touch-action: manipulation;
+                    user-select: none;
+                    -webkit-user-select: none;
+                    transition: all 0.1s ease;
+                }
+                .walk-btn:active, .walk-btn.pressed {
+                    background: #ff3e41 !important;
+                    transform: scale(0.9);
+                    box-shadow: 0 0 25px rgba(255, 62, 65, 0.8);
+                }
+                #btn-forward { grid-column: 2; grid-row: 1; }
+                #btn-left { grid-column: 1; grid-row: 2; }
+                #btn-right { grid-column: 3; grid-row: 2; }
+                #btn-backward { grid-column: 2; grid-row: 2; }
+                
+                @media (max-width: 480px) {
+                    .walk-btn {
+                        width: 55px;
+                        height: 55px;
+                        font-size: 22px;
+                    }
+                    #mobile-walk-controls {
+                        grid-template-columns: 55px 55px 55px;
+                        grid-template-rows: 55px 55px;
+                        gap: 8px;
+                        bottom: 20px;
+                    }
+                }
+            </style>
+            <button class="walk-btn" id="btn-forward">⬆</button>
+            <button class="walk-btn" id="btn-left">⬅</button>
+            <button class="walk-btn" id="btn-right">➡</button>
+            <button class="walk-btn" id="btn-backward">⬇</button>
+        `;
+        
+        document.body.appendChild(controls);
+        
+        // Setup button handlers
+        setupWalkButton('btn-forward', 'forward');
+        setupWalkButton('btn-backward', 'backward');
+        setupWalkButton('btn-left', 'left');
+        setupWalkButton('btn-right', 'right');
+        
+        // Add recalibration button
+        addRecalibrateButton();
+    }
+    
+    function setupWalkButton(id, direction) {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        
+        const activate = (e) => {
+            e.preventDefault();
+            walkState[direction] = true;
+            btn.classList.add('pressed');
+        };
+        
+        const deactivate = (e) => {
+            e.preventDefault();
+            walkState[direction] = false;
+            btn.classList.remove('pressed');
+        };
+        
+        // Touch events for mobile
+        btn.addEventListener('touchstart', activate, { passive: false });
+        btn.addEventListener('touchend', deactivate);
+        btn.addEventListener('touchcancel', deactivate);
+        
+        // Mouse events for testing on desktop
+        btn.addEventListener('mousedown', activate);
+        btn.addEventListener('mouseup', deactivate);
+        btn.addEventListener('mouseleave', deactivate);
+    }
+    
+    function addRecalibrateButton() {
+        const recalBtn = document.createElement('button');
+        recalBtn.textContent = '🎯';
+        recalBtn.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(26, 26, 26, 0.8);
+            border: 2px solid #ffde37;
+            color: #ffde37;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        `;
+        
+        recalBtn.addEventListener('click', () => {
+            initialOrientation = null;
+            recalBtn.style.background = '#ff3e41';
+            setTimeout(() => {
+                recalBtn.style.background = 'rgba(26, 26, 26, 0.8)';
+            }, 200);
+        });
+        
+        document.body.appendChild(recalBtn);
+    }
+    
+    // Walking update loop
+    function updateWalking() {
+        if (!isMobile()) return;
+        
+        const cameraRig = document.getElementById('camera-rig');
+        if (!cameraRig) return;
+        
+        const camera = document.querySelector('[camera]');
+        if (!camera) return;
+        
+        // Get camera's forward direction
+        const rotation = camera.getAttribute('rotation');
+        const angle = rotation.y || 0;
+        
+        // Calculate movement direction
+        let moveX = 0;
+        let moveZ = 0;
+        
+        if (walkState.forward) {
+            moveX -= Math.sin(angle);
+            moveZ -= Math.cos(angle);
+        }
+        if (walkState.backward) {
+            moveX += Math.sin(angle);
+            moveZ += Math.cos(angle);
+        }
+        if (walkState.left) {
+            moveX -= Math.cos(angle);
+            moveZ += Math.sin(angle);
+        }
+        if (walkState.right) {
+            moveX += Math.cos(angle);
+            moveZ -= Math.sin(angle);
+        }
+        
+        // Normalize diagonal movement
+        const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+        if (length > 0) {
+            moveX /= length;
+            moveZ /= length;
+        }
+        
+        // Apply movement
+        if (moveX !== 0 || moveZ !== 0) {
+            const pos = cameraRig.getAttribute('position');
+            const newX = pos.x + moveX * walkState.speed;
+            const newZ = pos.z + moveZ * walkState.speed;
+            
+            // Clamp to room boundaries
+            const clampedX = Math.max(-7, Math.min(7, newX));
+            const clampedZ = Math.max(-7, Math.min(7, newZ));
+            
+            cameraRig.setAttribute('position', {
+                x: clampedX,
+                y: pos.y,
+                z: clampedZ
+            });
+        }
+    }
+    
+    // Start walking loop
+    setInterval(updateWalking, 16); // ~60fps
+    
+    // ====================================
+    // LOADING SYSTEM
+    // ====================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const progressBar = document.getElementById('progress-bar');
+        const loadingText = document.getElementById('loading-text');
+        const scene = document.querySelector('a-scene');
+        
+        let progress = 0;
+        const loadingInterval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress > 100) progress = 100;
+            progressBar.style.width = `${progress}%`;
+            
+            if (progress < 30) {
+                loadingText.textContent = "LOADING 3D ASSETS...";
+            } else if (progress < 70) {
+                loadingText.textContent = "PREPARING ENVIRONMENT...";
+            } else {
+                loadingText.textContent = "FINALIZING EXPERIENCE...";
+            }
+            
+            if (progress >= 100) {
+                clearInterval(loadingInterval);
+            }
+        }, 200);
+        
+        scene.addEventListener('loaded', function() {
+            clearInterval(loadingInterval);
+            progressBar.style.width = '100%';
+            loadingText.textContent = "WELCOME TO GPK ULTRA 3D!";
+            
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    startRoomAnimations();
+                    setupScreenInteractions();
+                    setupNavigationControls();
+                    
+                    // Setup mobile walking
+                    setupMobileWalkMode();
+                }, 1000);
+            }, 500);
+        });
     });
-  },
-  
-  setupTouchControls: function() {
-    // Add on-screen movement buttons
-  }
-});
-    </script>
+    
+    // ====================================
+    // ROOM ANIMATIONS
+    // ====================================
+    function startRoomAnimations() {
+        const floatingCards = document.querySelectorAll('#floating-cards a-image');
+        floatingCards.forEach((card, index) => {
+            const delay = index * 500;
+            card.setAttribute('animation__float', {
+                property: 'position',
+                to: `${card.getAttribute('position').x} ${parseFloat(card.getAttribute('position').y) + 0.5} ${card.getAttribute('position').z}`,
+                dir: 'alternate',
+                dur: 3000 + (index * 500),
+                loop: true,
+                easing: 'easeInOutSine',
+                delay: delay
+            });
+            
+            card.setAttribute('animation__rotate', {
+                property: 'rotation',
+                to: `${card.getAttribute('rotation').x} ${parseFloat(card.getAttribute('rotation').y) + 10} ${card.getAttribute('rotation').z}`,
+                dir: 'alternate',
+                dur: 5000 + (index * 1000),
+                loop: true,
+                easing: 'easeInOutSine',
+                delay: delay
+            });
+        });
+    }
+    
+    // ====================================
+    // SCREEN INTERACTIONS
+    // ====================================
+    function setupScreenInteractions() {
+        const screens = document.querySelectorAll('.screen');
+        const screenInfo = document.getElementById('screen-info');
+        const screenTitle = document.getElementById('screen-title');
+        const screenDescription = document.getElementById('screen-description');
+        
+        const screenData = {
+            vintage: { title: "VINTAGE COLLECTION", description: "Original 1985 GPK cards", link: "vintage.html" },
+            modern: { title: "MODERN SERIES", description: "Latest GPK releases", link: "modern.html" },
+            wacky: { title: "WACKY PACKAGES", description: "Parody sticker collection", link: "wacky.html" },
+            custom: { title: "CUSTOM CARDS", description: "Fan-created artwork", link: "custom.html" },
+            trading: { title: "TRADING HUB", description: "Swap with collectors", link: "trading.html" },
+            "pack-opening": { title: "VIRTUAL PACKS", description: "Open digital packs", link: "packs.html" }
+        };
+        
+        screens.forEach(screen => {
+            const screenType = screen.getAttribute('screen-type');
+            
+            screen.addEventListener('mouseenter', () => {
+                const data = screenData[screenType];
+                if (data) {
+                    screenTitle.textContent = data.title;
+                    screenDescription.textContent = data.description;
+                    screenInfo.style.display = 'block';
+                }
+            });
+            
+            screen.addEventListener('mouseleave', () => {
+                screenInfo.style.display = 'none';
+            });
+            
+            screen.addEventListener('click', () => {
+                const data = screenData[screenType];
+                if (data) {
+                    screenDescription.textContent = `Loading ${data.title}...`;
+                    setTimeout(() => { screenInfo.style.display = 'none'; }, 2000);
+                }
+            });
+        });
+    }
+    
+    // ====================================
+    // NAVIGATION CONTROLS
+    // ====================================
+    function setupNavigationControls() {
+        document.getElementById('reset-view')?.addEventListener('click', () => {
+            const cameraRig = document.getElementById('camera-rig');
+            if (cameraRig) {
+                cameraRig.setAttribute('position', '0 1.6 0');
+                cameraRig.setAttribute('rotation', '0 0 0');
+            }
+        });
+        
+        document.getElementById('help-btn')?.addEventListener('click', () => {
+            const screenInfo = document.getElementById('screen-info');
+            const screenTitle = document.getElementById('screen-title');
+            const screenDescription = document.getElementById('screen-description');
+            if (screenInfo && screenTitle && screenDescription) {
+                screenTitle.textContent = "CONTROLS";
+                screenDescription.textContent = isMobile() ? 
+                    "Tilt phone to look around. Use buttons to walk." : 
+                    "Mouse to look, WASD to move, click screens to interact";
+                screenInfo.style.display = 'block';
+                setTimeout(() => { screenInfo.style.display = 'none'; }, 4000);
+            }
+        });
+    }
+</script>
+    
 </body>
 </html>
